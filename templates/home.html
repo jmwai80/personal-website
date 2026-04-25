@@ -1,0 +1,104 @@
+{{ define "content" }}
+
+<!-- Hero -->
+<section class="mb-20">
+  <p class="text-accent text-sm mb-3">Hello, world. I'm</p>
+  <h1 class="text-5xl font-semibold text-white mb-4 leading-tight">John Mwai</h1>
+  <h2 class="text-xl text-gray-400 mb-6">Software Engineer</h2>
+  <p class="text-gray-400 leading-relaxed max-w-xl">
+    I build scalable systems and web applications — from backend APIs to
+    full deployment pipelines. Passionate about clean architecture, Go,
+    and shipping things that actually work.
+  </p>
+
+  <!-- Social links -->
+  <div class="flex gap-4 mt-8">
+    <a href="https://github.com/jmwaid80" target="_blank"
+       class="flex items-center gap-2 px-4 py-2 border border-gray-700 rounded hover:border-accent hover:text-accent transition-all text-sm text-gray-300">
+      <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+        <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/>
+      </svg>
+      GitHub
+    </a>
+    <a href="mailto:mwaijohn244@gmail.com"
+       class="flex items-center gap-2 px-4 py-2 border border-gray-700 rounded hover:border-accent hover:text-accent transition-all text-sm text-gray-300">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+      </svg>
+      Email
+    </a>
+  </div>
+</section>
+
+<!-- About -->
+<section id="about" class="mb-20">
+  <h3 class="text-accent text-sm mb-4">// about</h3>
+  <div class="space-y-3 text-gray-400 leading-relaxed">
+    <p>Software engineer with experience building backend systems, APIs, and deployment pipelines. I enjoy working close to the metal — understanding how things actually run in production.</p>
+    <p>Currently building personal projects including this site and an apartment management system. Always learning.</p>
+  </div>
+
+  <!-- Skills -->
+  <div class="mt-6 flex flex-wrap gap-2">
+    {{ range .Skills }}
+    <span class="px-3 py-1 text-xs border border-gray-700 rounded-full text-gray-400">{{ . }}</span>
+    {{ else }}
+    <span class="px-3 py-1 text-xs border border-gray-700 rounded-full text-gray-400">Go</span>
+    <span class="px-3 py-1 text-xs border border-gray-700 rounded-full text-gray-400">Docker</span>
+    <span class="px-3 py-1 text-xs border border-gray-700 rounded-full text-gray-400">Linux</span>
+    <span class="px-3 py-1 text-xs border border-gray-700 rounded-full text-gray-400">Python</span>
+    <span class="px-3 py-1 text-xs border border-gray-700 rounded-full text-gray-400">PostgreSQL</span>
+    <span class="px-3 py-1 text-xs border border-gray-700 rounded-full text-gray-400">CI/CD</span>
+    {{ end }}
+  </div>
+</section>
+
+<!-- Projects -->
+<section id="projects" class="mb-20">
+  <h3 class="text-accent text-sm mb-6">// projects</h3>
+  <div class="space-y-4">
+
+    <div class="border border-gray-800 rounded-lg p-5 hover:border-gray-600 transition-colors">
+      <div class="flex items-start justify-between mb-2">
+        <h4 class="text-white font-semibold">Personal Website</h4>
+        <span class="text-xs text-gray-600">2026</span>
+      </div>
+      <p class="text-gray-400 text-sm mb-3">This site — Go backend, Docker, CI/CD via GitHub Actions, deployed on Oracle Cloud.</p>
+      <div class="flex gap-2">
+        <span class="text-xs text-accent">Go</span>
+        <span class="text-xs text-gray-600">·</span>
+        <span class="text-xs text-accent">Docker</span>
+        <span class="text-xs text-gray-600">·</span>
+        <span class="text-xs text-accent">Caddy</span>
+      </div>
+    </div>
+
+    <div class="border border-gray-800 rounded-lg p-5 hover:border-gray-600 transition-colors">
+      <div class="flex items-start justify-between mb-2">
+        <h4 class="text-white font-semibold">Apartment Management System</h4>
+        <span class="text-xs text-gray-600">2026</span>
+      </div>
+      <p class="text-gray-400 text-sm mb-3">Availability tracking and management for 48 units. WhatsApp Business API integration.</p>
+      <div class="flex gap-2">
+        <span class="text-xs text-accent">Go</span>
+        <span class="text-xs text-gray-600">·</span>
+        <span class="text-xs text-accent">SQLite</span>
+        <span class="text-xs text-gray-600">·</span>
+        <span class="text-xs text-accent">WhatsApp API</span>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- Contact -->
+<section id="contact">
+  <h3 class="text-accent text-sm mb-4">// contact</h3>
+  <p class="text-gray-400 mb-4">Have a project in mind or just want to connect?</p>
+  <a href="mailto:mwaijohn244@gmail.com"
+     class="inline-flex items-center gap-2 px-5 py-2.5 bg-accent text-gray-950 font-semibold rounded hover:bg-emerald-400 transition-colors text-sm">
+    Get in touch →
+  </a>
+</section>
+
+{{ end }}

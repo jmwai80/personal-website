@@ -43,15 +43,15 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+      - name: Pull arm64 image for streaming
+        run: docker pull --platform linux/arm64 ghcr.io/${{ github.repository_owner }}/personal-website:latest
+
       - name: Deploy to VM
-        uses: appleboy/ssh-action@v1
-        with:
-          host: ${{ secrets.VM_HOST }}
-          username: ${{ secrets.VM_USER }}
-          key: ${{ secrets.VM_SSH_KEY }}
-          script: |
-            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.repository_owner }} --password-stdin
-            cd /app
-            docker compose pull personal-site
-            docker compose up -d
-            docker image prune -f
+        run: |
+          echo "${{ secrets.VM_SSH_KEY }}" > /tmp/deploy_key
+          chmod 600 /tmp/deploy_key
+          docker save ghcr.io/${{ github.repository_owner }}/personal-website:latest | \
+            ssh -i /tmp/deploy_key -o StrictHostKeyChecking=no \
+                ${{ secrets.VM_USER }}@${{ secrets.VM_HOST }} \
+                'docker load && cd /app && docker compose up -d && docker image prune -f'
+          rm -f /tmp/deploy_key

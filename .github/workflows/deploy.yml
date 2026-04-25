@@ -49,6 +49,7 @@ jobs:
           username: ${{ secrets.VM_USER }}
           key: ${{ secrets.VM_SSH_KEY }}
           script: |
+            echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u jmwaid80 --password-stdin
             cd /app
             docker compose pull personal-site
             docker compose up -d

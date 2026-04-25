@@ -1,0 +1,9 @@
+.git
+.github
+obsidian
+scripts
+SETUP.md
+README.md
+*.md
+docker-compose.yml
+Caddyfile

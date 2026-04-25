@@ -1,0 +1,3 @@
+johnmwai.com, www.johnmwai.com {
+    reverse_proxy personal-site:8080
+}

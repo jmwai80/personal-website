@@ -38,6 +38,7 @@ jobs:
           context: .
           platforms: linux/arm64
           push: true
+          provenance: false
           tags: ghcr.io/${{ github.repository_owner }}/personal-website:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max

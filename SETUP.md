@@ -24,22 +24,24 @@ Local (Go + Docker)
 | Site | Domain | Port | Status |
 |------|--------|------|--------|
 | Personal | TBD | 8080 | [ ] not started |
-| Apartments | TBD | 8081 | [ ] not started |
+
+> Apartments site is a separate repo.
 
 ---
 
-## Phase 1: Prerequisites Checklist
+## Phase 1: Prerequisites Checklist ✅
 
 ### Local Machine
-- [ ] Go installed (`go version` — need 1.21+)
-- [ ] Docker Desktop installed and running
-- [ ] Git installed
-- [ ] SSH key pair generated (`~/.ssh/id_ed25519`)
+- [x] Go 1.26.2 installed
+- [x] Docker Desktop installed and running
+- [x] Git 2.50.1 installed
+- [x] SSH key pair generated (`~/.ssh/id_ed25519`)
+- [x] OCI CLI installed and configured
 
 ### Accounts
-- [ ] Oracle Cloud account created (free tier)
-- [ ] GitHub account (existing)
-- [ ] GoDaddy domain (existing) — domain: ___________
+- [x] Oracle Cloud account created — VM pending (capacity issues, retry script running)
+- [x] GitHub account: jmwaid80
+- [x] GoDaddy domain (existing) — domain: ___________
 
 ---
 
@@ -205,6 +207,9 @@ Caddy handles TLS automatically via Let's Encrypt once DNS propagates.
 | Date | Step | Notes |
 |------|------|-------|
 | 2026-04-24 | Started planning | Architecture decided: Docker + Caddy + Oracle Free Tier + GitHub Actions |
+| 2026-04-25 | Phase 1 complete | All local tools installed, OCI CLI configured, GitHub repo live |
+| 2026-04-25 | Oracle VM blocked | "Out of host capacity" on all 3 ADs; auto-retry script running |
+| 2026-04-25 | Scope clarified | Apartments = separate repo; this repo is personal site only |
 
 ---
 

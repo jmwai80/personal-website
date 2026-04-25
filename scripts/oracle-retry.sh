@@ -5,9 +5,8 @@
 eval "$(/opt/homebrew/bin/brew shellenv)"
 export SUPPRESS_LABEL_WARNING=True
 
-COMPARTMENT_ID="ocid1.tenancy.oc1..aaaaaaaal2rj3nmoeys5xx2665wryfe26qy6k527xn5yabxkhhxpexyqem7a"
-SUBNET_ID="ocid1.subnet.oc1.iad.aaaaaaaay3pxqfccuginxiyp63hb3alwczaoozjswrvxqxh47kgttuy4xnma"
-IMAGE_ID="ocid1.image.oc1.iad.aaaaaaaac6ozbxqea5kb7to5qu3asvnqj5f4j6gcxhxipeafefzpwtxm6mwa"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/oracle-config.env"
 SSH_KEY="$HOME/.ssh/oracle_vm.pub"
 LOG="$HOME/Projects/personal-website/scripts/oracle-retry.log"
 SUCCESS_FILE="$HOME/Projects/personal-website/scripts/oracle-vm-details.txt"

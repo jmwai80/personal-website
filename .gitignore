@@ -1,0 +1,21 @@
+# Knowledge base (local only)
+obsidian/
+
+# Secrets and credentials
+.env
+*.env
+scripts/*.env
+scripts/oracle-retry.log
+scripts/oracle-vm-details.txt
+
+# SSH / API keys
+*.pem
+*.key
+.oci/
+
+# OS
+.DS_Store
+
+# Go
+*.exe
+*/tmp/

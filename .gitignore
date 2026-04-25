@@ -1,5 +1,6 @@
-# Knowledge base (local only)
+# Knowledge base and setup docs (local only)
 obsidian/
+SETUP.md
 
 # Secrets and credentials
 .env

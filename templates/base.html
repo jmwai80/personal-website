@@ -1,54 +1,308 @@
 {{ define "base" }}
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>John Mwai — Software Engineer</title>
-  <meta name="description" content="Software engineer building scalable systems and web applications." />
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          fontFamily: { mono: ['JetBrains Mono', 'Fira Code', 'monospace'] },
-          colors: { accent: '#10b981' }
-        }
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>John Mwai — Software Engineer</title>
+<meta name="description" content="Backend engineer at DoorDash, working on Ads &amp; Promotions. Distributed systems, Kafka, Redis, Cassandra." />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        fontFamily: { mono: ['"JetBrains Mono"', 'ui-monospace', 'SFMono-Regular', 'monospace'] },
+        colors: {
+          ink:   '#0f041f',
+          panel: '#140828',
+          line:  '#1e0f35',
+          mute:  '#6b5a7e',
+          dim:   '#9a8aa8',
+          fg:    '#e8d6f0',
+          cyan:  '#ff5cd6',
+          violet:'#7b6bff',
+        },
       }
     }
-  </script>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
-  <style>
-    html { scroll-behavior: smooth; }
-    .fade-in { animation: fadeIn 0.6s ease-in; }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
-  </style>
+  }
+</script>
+<style>
+  :root {
+    --accent: #ff5cd6;
+    --accent-06: rgba(255,92,214,.06);
+    --accent-soft: rgba(255,92,214,.18);
+    --accent-mid: rgba(255,92,214,.45);
+    --accent-strong: rgba(255,92,214,.85);
+    --accent-12: rgba(255,92,214,.12);
+    --accent-35: rgba(255,92,214,.35);
+    --violet: #7b6bff;
+    --bg: #0f041f;
+    --grid-opacity: 0.45;
+    --scan-opacity: 1.1;
+    --type-scale: 1;
+  }
+  html, body { background: var(--bg); }
+  body {
+    color:#e8d6f0;
+    font-family:"JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+    font-feature-settings: "ss01","cv11";
+    -webkit-font-smoothing:antialiased;
+    font-size: calc(16px * var(--type-scale));
+  }
+
+  ::selection { background: var(--accent-soft); color:#fff0fb; }
+
+  /* hero background: grid + scanlines + radial glow */
+  .hero-bg {
+    position:absolute; inset:0; pointer-events:none; overflow:hidden;
+    mask-image: radial-gradient(ellipse 90% 70% at 50% 35%, #000 55%, transparent 100%);
+    -webkit-mask-image: radial-gradient(ellipse 90% 70% at 50% 35%, #000 55%, transparent 100%);
+  }
+  .hero-grid {
+    position:absolute; inset:-2px;
+    opacity: var(--grid-opacity);
+    background-image:
+      linear-gradient(to right, var(--accent-soft) 1px, transparent 1px),
+      linear-gradient(to bottom, var(--accent-soft) 1px, transparent 1px);
+    background-size: 56px 56px;
+    animation: gridDrift 24s linear infinite;
+  }
+  .hero-grid-fine {
+    position:absolute; inset:-2px;
+    background-image:
+      linear-gradient(to right, rgba(123,107,255,.045) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(123,107,255,.045) 1px, transparent 1px);
+    background-size: 14px 14px;
+  }
+  @keyframes gridDrift {
+    from { transform: translate3d(0,0,0); }
+    to   { transform: translate3d(56px,56px,0); }
+  }
+  .scanlines::before {
+    content:""; position:absolute; inset:0; pointer-events:none;
+    opacity: var(--scan-opacity);
+    background: repeating-linear-gradient(to bottom,
+      rgba(255,255,255,.022) 0 1px,
+      transparent 1px 3px);
+    mix-blend-mode: overlay;
+  }
+  .scanlines::after {
+    content:""; position:absolute; inset:0; pointer-events:none;
+    background: linear-gradient(180deg, var(--accent-06), transparent 30%, transparent 70%, rgba(123,107,255,.06));
+  }
+  .vignette {
+    position:absolute; inset:0; pointer-events:none;
+    background:
+      radial-gradient(60% 40% at 20% 10%, var(--accent-06), transparent 60%),
+      radial-gradient(50% 35% at 90% 80%, rgba(123,107,255,.10), transparent 60%);
+  }
+  .sweep {
+    position:absolute; left:0; right:0; height:120px;
+    background: linear-gradient(180deg, transparent, var(--accent-06), transparent);
+    animation: sweep 7s linear infinite;
+    filter: blur(2px);
+  }
+  @keyframes sweep {
+    0%   { top: -10%; opacity:0; }
+    10%  { opacity:.9; }
+    90%  { opacity:.9; }
+    100% { top: 110%; opacity:0; }
+  }
+
+  .cursor {
+    display:inline-block; width:.55em; height:1em; vertical-align:-0.12em;
+    background: currentColor; margin-left:.12em;
+    animation: blink 1.05s steps(1,end) infinite;
+    box-shadow: 0 0 14px var(--accent-mid);
+  }
+  @keyframes blink { 50% { opacity:0; } }
+
+  .nav-link { position:relative; }
+  .nav-link::after {
+    content:""; position:absolute; left:0; right:100%; bottom:-6px; height:1px;
+    background: linear-gradient(90deg, var(--accent), transparent);
+    transition: right .35s ease;
+    box-shadow: 0 0 8px var(--accent);
+  }
+  .nav-link:hover::after, .nav-link[aria-current="true"]::after { right: 0; }
+
+  .pill {
+    border:1px solid var(--accent-soft);
+    background: linear-gradient(180deg, var(--accent-soft), transparent);
+    box-shadow: inset 0 0 16px var(--accent-soft);
+    transition: all .25s ease;
+  }
+  .pill:hover {
+    border-color: var(--accent-mid);
+    box-shadow: inset 0 0 20px var(--accent-soft), 0 0 24px var(--accent-mid);
+    color:#fff0fb;
+  }
+
+  .card {
+    position:relative;
+    background: linear-gradient(180deg, rgba(255,255,255,.012), rgba(255,255,255,0)), #0f041f;
+    border:1px solid #1e0f35;
+    transition: transform .35s ease, border-color .35s ease, box-shadow .35s ease;
+  }
+  .card::before {
+    content:""; position:absolute; inset:0; border-radius:inherit; pointer-events:none;
+    background: radial-gradient(600px 200px at var(--mx,50%) var(--my,0%), var(--accent-soft), transparent 60%);
+    opacity:0; transition: opacity .35s ease;
+  }
+  .card:hover {
+    transform: translateY(-3px);
+    border-color: var(--accent-mid);
+    box-shadow:
+      0 0 0 1px var(--accent-soft) inset,
+      0 30px 80px -30px var(--accent-35),
+      0 0 80px -30px rgba(123,107,255,.35);
+  }
+  .card:hover::before { opacity:1; }
+  .card .corner { position:absolute; width:12px; height:12px; border-color: var(--accent-mid); transition: opacity .35s ease; opacity:.45; }
+  .card:hover .corner { opacity:1; }
+  .corner.tl { top:-1px; left:-1px; border-top:1px solid; border-left:1px solid; }
+  .corner.tr { top:-1px; right:-1px; border-top:1px solid; border-right:1px solid; }
+  .corner.bl { bottom:-1px; left:-1px; border-bottom:1px solid; border-left:1px solid; }
+  .corner.br { bottom:-1px; right:-1px; border-bottom:1px solid; border-right:1px solid; }
+
+  .btn {
+    position:relative; display:inline-flex; align-items:center; gap:.65rem;
+    padding:.85rem 1.15rem; border:1px solid var(--accent-mid);
+    color:#fff0fb; background: rgba(255,255,255,.02);
+    transition: all .25s ease;
+  }
+  .btn:hover {
+    border-color: var(--accent-strong);
+    background: var(--accent-soft);
+    box-shadow: 0 0 0 1px var(--accent-soft), 0 10px 40px -10px var(--accent-mid), inset 0 0 24px var(--accent-soft);
+  }
+  .btn-ghost { border-color: rgba(232,214,240,.18); color:#e8d6f0; background: transparent; }
+  .btn-ghost:hover { border-color: rgba(232,214,240,.55); box-shadow: 0 0 0 1px rgba(232,214,240,.18), 0 10px 30px -10px rgba(232,214,240,.18); }
+
+  .dot {
+    width:8px; height:8px; border-radius:9999px; background: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-soft), 0 0 14px var(--accent-mid);
+    animation: pulse 1.8s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%,100% { box-shadow: 0 0 0 3px var(--accent-12), 0 0 14px var(--accent-mid); }
+    50%     { box-shadow: 0 0 0 5px var(--accent-06), 0 0 20px var(--accent); }
+  }
+
+  .reveal { opacity:0; transform: translateY(14px); transition: opacity .9s ease, transform .9s ease; }
+  .reveal.in { opacity:1; transform:none; }
+
+  .name {
+    background: linear-gradient(180deg, #ffffff 0%, #e8d6f0 65%, #c4a8d4 100%);
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+    text-shadow: 0 0 60px rgba(232,214,240,.06);
+    letter-spacing: -0.04em;
+  }
+  .name-glow {
+    position:absolute; inset:0; pointer-events:none;
+    background: radial-gradient(60% 80% at 50% 50%, var(--accent-soft), transparent 60%);
+    filter: blur(20px);
+  }
+
+  .tdot { width:10px; height:10px; border-radius:9999px; }
+  .hr-lab { display:flex; align-items:center; gap:14px; color:#6b5a7e; }
+  .hr-lab::before, .hr-lab::after { content:""; flex:1; height:1px; background: linear-gradient(90deg, transparent, #1e0f35, transparent); }
+  .label-cyan { color: var(--accent); text-shadow: 0 0 14px var(--accent-mid); }
+  .nav-border { background: linear-gradient(90deg, transparent, var(--accent-mid), transparent); height:1px; }
+  .arrow { transition: transform .25s ease; }
+  .group:hover .arrow, .btn:hover .arrow { transform: translateX(4px); }
+
+  a:focus-visible, button:focus-visible {
+    outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 2px;
+  }
+</style>
 </head>
-<body class="bg-gray-950 text-gray-100 font-mono min-h-screen flex flex-col">
+<body class="bg-ink text-fg min-h-screen overflow-x-hidden">
 
-  <!-- Nav -->
-  <nav class="border-b border-gray-800 px-6 py-4">
-    <div class="max-w-3xl mx-auto flex items-center justify-between">
-      <span class="text-accent font-semibold text-lg">jm<span class="text-gray-500">@dev</span></span>
-      <div class="flex gap-6 text-sm text-gray-400">
-        <a href="#about" class="hover:text-accent transition-colors">about</a>
-        <a href="#projects" class="hover:text-accent transition-colors">projects</a>
-        <a href="#contact" class="hover:text-accent transition-colors">contact</a>
-      </div>
+  <!-- ambient background -->
+  <div aria-hidden="true" class="fixed inset-0 pointer-events-none -z-10">
+    <div class="absolute inset-0" style="background:
+      radial-gradient(60% 50% at 80% -10%, rgba(123,107,255,.12), transparent 60%),
+      radial-gradient(50% 40% at -10% 30%, rgba(255,92,214,.08), transparent 60%),
+      #0f041f;"></div>
+    <div class="absolute inset-0 opacity-[.25]" style="
+      background-image:
+        linear-gradient(to right, rgba(255,255,255,.025) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255,255,255,.025) 1px, transparent 1px);
+      background-size: 64px 64px;"></div>
+  </div>
+
+  <!-- NAV -->
+  <header class="sticky top-0 z-40 backdrop-blur-md bg-ink/70">
+    <nav class="max-w-6xl mx-auto px-6 md:px-10 h-16 flex items-center justify-between">
+      <a href="/" class="group flex items-center gap-2.5">
+        <span class="inline-flex items-center justify-center w-7 h-7 border border-cyan/40 text-cyan text-[11px] tracking-tight">
+          {/}
+        </span>
+        <span class="text-cyan font-semibold tracking-tight">jm<span class="text-fg/60">@</span>dev</span>
+        <span class="hidden md:inline text-mute text-xs ml-2">~/portfolio</span>
+      </a>
+      <ul class="flex items-center gap-7 text-[13px]">
+        <li><a class="nav-link text-dim hover:text-fg transition-colors" href="#about">about</a></li>
+        <li><a class="nav-link text-dim hover:text-fg transition-colors" href="#experience">work</a></li>
+        <li><a class="nav-link text-dim hover:text-fg transition-colors" href="#projects">projects</a></li>
+        <li><a class="nav-link text-dim hover:text-fg transition-colors" href="/blog">blog</a></li>
+        <li><a class="nav-link text-dim hover:text-fg transition-colors" href="#contact">contact</a></li>
+        <li class="hidden sm:flex items-center gap-2 pl-5 ml-2 border-l border-line text-mute text-[12px]">
+          <span class="dot"></span><span>available</span>
+        </li>
+      </ul>
+    </nav>
+    <div class="nav-border"></div>
+  </header>
+
+  {{ template "content" . }}
+
+  <!-- FOOTER -->
+  <footer class="relative pt-10 pb-14">
+    <div class="nav-border opacity-60 mb-10"></div>
+    <div class="max-w-6xl mx-auto px-6 md:px-10 text-center text-mute text-[12px]">
+      © 2026 John Mwai · New York, NY ·
+      <a href="https://github.com/jmwaid80" target="_blank" rel="noopener noreferrer" class="hover:text-fg transition-colors">github</a> ·
+      <a href="https://www.linkedin.com/in/johnmwai" target="_blank" rel="noopener noreferrer" class="hover:text-fg transition-colors">linkedin</a>
     </div>
-  </nav>
-
-  <!-- Main -->
-  <main class="flex-1 max-w-3xl mx-auto w-full px-6 py-20 fade-in">
-    {{ template "content" . }}
-  </main>
-
-  <!-- Footer -->
-  <footer class="border-t border-gray-800 px-6 py-6 text-center text-gray-600 text-xs">
-    <span>© 2026 John Mwai &nbsp;·&nbsp; Built with Go</span>
   </footer>
 
+  <script>
+    const io = new IntersectionObserver((entries) => {
+      for (const e of entries) {
+        if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); }
+      }
+    }, { threshold: 0.12 });
+    document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+
+    document.querySelectorAll('[data-card]').forEach(card => {
+      card.addEventListener('pointermove', (ev) => {
+        const r = card.getBoundingClientRect();
+        card.style.setProperty('--mx', ((ev.clientX - r.left) / r.width * 100) + '%');
+        card.style.setProperty('--my', ((ev.clientY - r.top) / r.height * 100) + '%');
+      });
+    });
+
+    const links = [...document.querySelectorAll('header a.nav-link')];
+    const map = new Map(links.map(a => [a.getAttribute('href').replace('#',''), a]));
+    const sectionIO = new IntersectionObserver((entries) => {
+      entries.forEach(e => {
+        const a = map.get(e.target.id);
+        if (!a) return;
+        if (e.isIntersecting) {
+          links.forEach(l => l.removeAttribute('aria-current'));
+          a.setAttribute('aria-current', 'true');
+        }
+      });
+    }, { rootMargin: '-40% 0px -55% 0px' });
+    ['about','experience','projects','contact'].forEach(id => {
+      const el = document.getElementById(id); if (el) sectionIO.observe(el);
+    });
+  </script>
 </body>
 </html>
 {{ end }}

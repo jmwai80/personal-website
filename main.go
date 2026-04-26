@@ -22,6 +22,8 @@ func main() {
 
 	r.Get("/", homeHandler)
 	r.Get("/health", healthHandler)
+	r.Get("/blog", blogHandler)
+	r.Get("/blog/posts/decoupling-into-kafka", postKafkaHandler)
 
 	log.Println("Listening on :8080")
 	log.Fatal(http.ListenAndServe(":8080", r))
@@ -29,6 +31,20 @@ func main() {
 
 func homeHandler(w http.ResponseWriter, r *http.Request) {
 	if err := tmpl.ExecuteTemplate(w, "base", nil); err != nil {
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		log.Printf("template error: %v", err)
+	}
+}
+
+func blogHandler(w http.ResponseWriter, r *http.Request) {
+	if err := tmpl.ExecuteTemplate(w, "blog", nil); err != nil {
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		log.Printf("template error: %v", err)
+	}
+}
+
+func postKafkaHandler(w http.ResponseWriter, r *http.Request) {
+	if err := tmpl.ExecuteTemplate(w, "post_kafka", nil); err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		log.Printf("template error: %v", err)
 	}

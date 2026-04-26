@@ -1,0 +1,215 @@
+{{ define "post_kafka" }}
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>// decoupling into kafka — John Mwai</title>
+<meta name="description" content="Notes from a year of moving a synchronous service into a Kafka pipeline: partition keys, rebalances, idempotency, and DLQs." />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = { theme: { extend: {
+    fontFamily:{mono:['"JetBrains Mono"','ui-monospace','monospace']},
+    colors:{ink:'#0f041f',panel:'#140828',line:'#1e0f35',mute:'#6b5a7e',dim:'#9a8aa8',fg:'#e8d6f0'}
+  }}}
+</script>
+<style>
+  :root { --accent:#ff5cd6; --accent-soft:rgba(255,92,214,.18); --accent-glow:rgba(255,92,214,.45); --bg:#0f041f; }
+  html,body{ background:var(--bg); }
+  body{ color:#e8d6f0; font-family:"JetBrains Mono",ui-monospace,monospace; -webkit-font-smoothing:antialiased; }
+  ::selection{ background: var(--accent-soft); color:#fff0fb; }
+  .label{ color:var(--accent); text-shadow:0 0 14px var(--accent-glow); }
+  .nav-border{ background:linear-gradient(90deg,transparent,var(--accent-glow),transparent); height:1px; }
+  .nav-link{ position:relative; }
+  .nav-link::after{ content:""; position:absolute; left:0; right:100%; bottom:-6px; height:1px; background:linear-gradient(90deg,var(--accent),transparent); transition:right .35s ease; box-shadow:0 0 8px var(--accent); }
+  .nav-link:hover::after, .nav-link[aria-current="true"]::after{ right:0; }
+  .prose p{ color:rgba(232,214,240,.8); line-height:1.75; margin:1.1em 0; }
+  .prose h2{ color:#fff0fb; font-size:1.6rem; font-weight:500; letter-spacing:-.01em; margin:2.4em 0 .8em; }
+  .prose h3{ color:#fff0fb; font-size:1.2rem; font-weight:500; margin:2em 0 .6em; }
+  .prose code{ background:rgba(255,255,255,.04); border:1px solid #1e0f35; padding:.05em .35em; border-radius:3px; color:#fff0fb; font-size:.92em; }
+  .prose pre{ background:#140828; border:1px solid #1e0f35; padding:1.1rem 1.25rem; border-radius:6px; overflow-x:auto; font-size:.85rem; line-height:1.6; margin:1.4em 0; }
+  .prose pre .c{ color:#6b5a7e; }
+  .prose pre .k{ color:var(--accent); }
+  .prose pre .s{ color:#a78bff; }
+  .prose ul{ margin:1em 0 1em 1.2em; }
+  .prose li{ color:rgba(232,214,240,.8); line-height:1.7; margin:.4em 0; list-style:"›  "; }
+  .prose blockquote{ border-left:2px solid var(--accent-soft); padding:.2em 1em; color:rgba(232,214,240,.7); margin:1.5em 0; font-style:italic; }
+  .prose a{ color:var(--accent); text-decoration:underline; text-decoration-color: var(--accent-soft); text-underline-offset:3px; }
+  .prose strong{ color:#fff0fb; font-weight:600; }
+  .pill{ border:1px solid var(--accent-soft); padding:.25rem .65rem; font-size:12px; }
+  a:focus-visible,button:focus-visible{ outline:2px solid var(--accent); outline-offset:3px; border-radius:2px; }
+</style>
+</head>
+<body class="bg-ink text-fg min-h-screen overflow-x-hidden">
+
+  <div aria-hidden="true" class="fixed inset-0 pointer-events-none -z-10">
+    <div class="absolute inset-0" style="background: radial-gradient(60% 50% at 80% -10%, rgba(123,107,255,.10), transparent 60%), radial-gradient(50% 40% at -10% 30%, rgba(255,92,214,.07), transparent 60%);"></div>
+    <div class="absolute inset-0 opacity-[.25]" style="background-image: linear-gradient(to right, rgba(255,255,255,.025) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,.025) 1px, transparent 1px); background-size: 64px 64px;"></div>
+  </div>
+
+  <!-- NAV -->
+  <header class="sticky top-0 z-40 backdrop-blur-md bg-ink/70">
+    <nav class="max-w-3xl mx-auto px-6 md:px-10 h-16 flex items-center justify-between">
+      <a href="/" class="group flex items-center gap-2.5">
+        <span class="inline-flex items-center justify-center w-7 h-7 border text-[11px]" style="border-color:var(--accent-soft); color:var(--accent);">{/}</span>
+        <span class="font-semibold tracking-tight" style="color:var(--accent);">jm<span class="text-fg/60">@</span>dev</span>
+      </a>
+      <ul class="flex items-center gap-7 text-[13px]">
+        <li><a class="nav-link text-dim hover:text-fg transition-colors" href="/#about">about</a></li>
+        <li><a class="nav-link text-dim hover:text-fg transition-colors" href="/#projects">projects</a></li>
+        <li><a class="nav-link text-fg" href="/blog" aria-current="true">blog</a></li>
+        <li><a class="nav-link text-dim hover:text-fg transition-colors" href="/#contact">contact</a></li>
+      </ul>
+    </nav>
+    <div class="nav-border"></div>
+  </header>
+
+  <!-- ARTICLE -->
+  <article class="max-w-3xl mx-auto px-6 md:px-10 pt-16 pb-24">
+    <a href="/blog" class="text-mute text-[12px] hover:text-fg transition-colors">← back to index</a>
+
+    <div class="mt-8 flex items-center gap-3 text-[12px] text-mute">
+      <span class="label">// post_001</span>
+      <span class="text-line">·</span>
+      <span>2026-04-08</span>
+      <span class="text-line">·</span>
+      <span>11 min read</span>
+    </div>
+
+    <h1 class="mt-5 text-fg text-4xl md:text-5xl font-semibold tracking-tight leading-[1.05]">
+      Decoupling synchronous code paths into Kafka, without regrets
+    </h1>
+
+    <p class="mt-5 text-fg/70 text-[15px] leading-relaxed">
+      Notes from a year of moving a synchronous service into a Publisher → Topic → Consumer pipeline:
+      picking partition keys, surviving rebalances, getting idempotency right, and what we actually
+      put in our DLQ.
+    </p>
+
+    <div class="mt-6 flex flex-wrap gap-2 text-[12px]">
+      <span class="pill">kafka</span>
+      <span class="pill">systems</span>
+      <span class="pill">essay</span>
+    </div>
+
+    <hr class="my-10 border-line" />
+
+    <div class="prose">
+      <p>
+        The first version of the service was synchronous, and that was fine — until it wasn't.
+        A single endpoint had grown to fan out to four downstream systems on every request, and a
+        slow afternoon at any one of them turned into a bad afternoon for the whole API. We were
+        absorbing other people's tail latency, and the on-call rotation could feel it.
+      </p>
+      <p>
+        Pushing the work onto Kafka wasn't a controversial decision; the controversial part was
+        getting the migration right while production traffic kept moving. This is a write-up of
+        the choices that mattered, and the ones I'd happily un-make.
+      </p>
+
+      <h2>1. Pick the partition key with delivery semantics in mind</h2>
+      <p>
+        The partition key is the single most consequential design choice in a Kafka pipeline,
+        because it determines two things at once: <strong>which messages stay ordered</strong>, and
+        <strong>which consumer instance sees them</strong>. We chose <code>tenant_id</code>, which
+        kept everything ordered per tenant and let us scale consumers horizontally without
+        worrying about cross-tenant ordering.
+      </p>
+      <p>
+        The trap: a handful of huge tenants meant a handful of huge partitions. Once we noticed
+        consumer lag concentrated on one or two partitions, we added a small <code>shard</code>
+        suffix for the heaviest tenants — a partial-key trick that's invisible to consumers but
+        hugely effective at smoothing the load.
+      </p>
+
+      <h2>2. Idempotency is not optional</h2>
+      <p>
+        At-least-once delivery means duplicates are a feature of the system, not a bug. We
+        designed every consumer with a deterministic <code>dedupe_key</code> derived from the
+        producer-side message ID, and persisted "already handled" markers next to the side
+        effects they protected.
+      </p>
+      <pre><span class="c">// pseudo-code</span>
+<span class="k">if</span> seen(dedupeKey) {
+    <span class="k">return</span> ack()
+}
+<span class="k">if</span> err := apply(message); err != <span class="k">nil</span> {
+    <span class="k">return</span> retry(err)
+}
+mark(dedupeKey)
+ack()</pre>
+      <p>
+        That last <code>mark / ack</code> ordering is load-bearing: marking after the side effect
+        but before the ack means a crash between mark and ack just produces a redelivery that
+        gets dropped at the top of the loop. It's the cheapest insurance you can buy.
+      </p>
+
+      <h2>3. The DLQ is a queue, not a graveyard</h2>
+      <p>
+        A dead-letter queue is only useful if a human ever looks at it. We took two unglamorous
+        steps that paid for themselves immediately:
+      </p>
+      <ul>
+        <li>Every DLQ entry carries the original payload, the error class, and the consumer
+            version that produced it. No reading code archaeology to debug a six-month-old failure.</li>
+        <li>The DLQ has its own dashboard with the same SLO treatment as the main pipeline. If
+            it grows faster than we drain it, somebody gets paged.</li>
+      </ul>
+
+      <h2>4. Rebalances are a load test you didn't schedule</h2>
+      <p>
+        The first time a deploy triggered a consumer-group rebalance under load, I learned more
+        about Kafka in ten minutes than I had in a quarter of reading. Two things made the next
+        rebalance boring:
+      </p>
+      <ul>
+        <li>Cooperative rebalancing — partitions move incrementally instead of "stop the world."</li>
+        <li>A small <code>session.timeout.ms</code> bump for consumers doing heavy work, paired
+            with explicit <code>poll()</code> heartbeats during long handlers.</li>
+      </ul>
+
+      <h2>5. The migration pattern: dual-write, then flip</h2>
+      <p>
+        We didn't cut over in one step. The producer wrote to Kafka <em>and</em> the legacy
+        synchronous path for two weeks while we compared outputs in a side-by-side reconciliation
+        job. When the diff job hit zero for ten straight days, we flipped the read path; a week
+        later we removed the synchronous code.
+      </p>
+      <blockquote>
+        Boring migrations are the ones where the diff job is the most exciting page in the deck.
+      </blockquote>
+
+      <h2>What I'd do again</h2>
+      <p>
+        Treating the pipeline as <em>five independent decisions</em> — partitioning, idempotency,
+        retry, DLQ, and rebalance behaviour — instead of "one Kafka thing" was the unlock. Each
+        of those has its own happy path and its own failure mode, and naming them out loud makes
+        them debuggable.
+      </p>
+      <p>
+        The piece I'd push harder on next time: <strong>observability before traffic.</strong>
+        We had producer and consumer metrics from day one, but we added cross-pipeline tracing
+        weeks later. Those weeks were the most expensive ones.
+      </p>
+    </div>
+
+    <hr class="my-12 border-line" />
+
+    <div class="flex items-center justify-between text-[13px]">
+      <a href="/blog" class="text-mute hover:text-fg transition-colors">← all posts</a>
+      <a href="mailto:mwaijohn444@gmail.com" class="hover:text-fg transition-colors" style="color:var(--accent);">questions? email me →</a>
+    </div>
+  </article>
+
+  <footer class="relative pt-6 pb-14">
+    <div class="nav-border opacity-60 mb-10"></div>
+    <div class="max-w-3xl mx-auto px-6 md:px-10 text-center text-mute text-[12px]">
+      © 2026 John Mwai · New York, NY
+    </div>
+  </footer>
+</body>
+</html>
+{{ end }}

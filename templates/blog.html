@@ -1,0 +1,355 @@
+{{ define "blog" }}
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>// blog — John Mwai</title>
+<meta name="description" content="Field notes from a working engineer. Distributed systems, Kafka, Redis, and the gritty middle of production infrastructure." />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: { extend: {
+      fontFamily: { mono: ['"JetBrains Mono"', 'ui-monospace', 'SFMono-Regular', 'monospace'] },
+      colors: { ink:'#0f041f', panel:'#140828', line:'#1e0f35', mute:'#6b5a7e', dim:'#9a8aa8', fg:'#e8d6f0' }
+    }}
+  }
+</script>
+<style>
+  :root { --accent:#ff5cd6; --accent-soft:rgba(255,92,214,.18); --accent-glow:rgba(255,92,214,.45); --bg:#0f041f; }
+  html, body { background: var(--bg); }
+  body { color:#e8d6f0; font-family:"JetBrains Mono",ui-monospace,SFMono-Regular,monospace; -webkit-font-smoothing:antialiased; }
+  ::selection { background: var(--accent-soft); color:#fff0fb; }
+  .label { color: var(--accent); text-shadow: 0 0 14px var(--accent-glow); }
+  .hr-lab { display:flex; align-items:center; gap:14px; color:#6b5a7e; }
+  .hr-lab::before, .hr-lab::after { content:""; flex:1; height:1px; background: linear-gradient(90deg, transparent, #1e0f35, transparent); }
+  .nav-border { background: linear-gradient(90deg, transparent, var(--accent-glow), transparent); height:1px; }
+  .nav-link { position:relative; }
+  .nav-link::after {
+    content:""; position:absolute; left:0; right:100%; bottom:-6px; height:1px;
+    background: linear-gradient(90deg, var(--accent), transparent);
+    transition: right .35s ease; box-shadow: 0 0 8px var(--accent);
+  }
+  .nav-link:hover::after, .nav-link[aria-current="true"]::after { right: 0; }
+  .dot {
+    width:8px; height:8px; border-radius:9999px; background:var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-soft), 0 0 14px var(--accent-glow);
+    animation: pulse 1.8s ease-in-out infinite;
+  }
+  @keyframes pulse { 50% { box-shadow: 0 0 0 5px rgba(255,92,214,.06), 0 0 22px var(--accent); } }
+  .reveal { opacity:0; transform: translateY(14px); transition: opacity .9s ease, transform .9s ease; }
+  .reveal.in { opacity:1; transform:none; }
+  .post {
+    position:relative;
+    background: linear-gradient(180deg, rgba(255,255,255,.012), rgba(255,255,255,0)), #0f041f;
+    border:1px solid #1e0f35;
+    transition: border-color .3s ease, transform .3s ease, box-shadow .3s ease;
+  }
+  .post:hover {
+    border-color: var(--accent-glow);
+    transform: translateY(-2px);
+    box-shadow: 0 0 0 1px var(--accent-soft) inset, 0 24px 60px -30px var(--accent-glow);
+  }
+  .post .corner { position:absolute; width:10px; height:10px; opacity:.4; transition: opacity .3s; border-color: var(--accent-glow); }
+  .post:hover .corner { opacity:1; }
+  .corner.tl { top:-1px; left:-1px; border-top:1px solid; border-left:1px solid; }
+  .corner.tr { top:-1px; right:-1px; border-top:1px solid; border-right:1px solid; }
+  .corner.bl { bottom:-1px; left:-1px; border-bottom:1px solid; border-left:1px solid; }
+  .corner.br { bottom:-1px; right:-1px; border-bottom:1px solid; border-right:1px solid; }
+  .post[data-coming-soon="true"]::before {
+    content:"soon"; position:absolute; top:14px; right:16px; z-index:2;
+    font-size:9.5px; letter-spacing:.16em; text-transform:uppercase;
+    color: var(--accent); border:1px solid var(--accent-soft);
+    padding:2px 6px; border-radius:2px; opacity:.7; background: rgba(0,0,0,.25);
+  }
+  .post[data-coming-soon="true"]:hover::before { opacity:1; }
+  #toast {
+    position:fixed; left:50%; bottom:36px; transform:translateX(-50%) translateY(20px);
+    background:#140828; border:1px solid var(--accent-soft);
+    color:#e8d6f0; font-size:12.5px; padding:10px 16px; border-radius:4px;
+    box-shadow: 0 0 30px -8px var(--accent-glow), 0 0 0 1px var(--accent-soft) inset;
+    opacity:0; pointer-events:none; transition: opacity .25s ease, transform .25s ease; z-index:60;
+  }
+  #toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+  #toast .dot { display:inline-block; width:6px; height:6px; border-radius:50%; background:var(--accent); box-shadow:0 0 10px var(--accent); margin-right:8px; vertical-align:middle; }
+  .tag {
+    border:1px solid var(--accent-soft);
+    background: linear-gradient(180deg, rgba(255,92,214,.04), rgba(255,92,214,.01));
+    transition: border-color .25s ease, color .25s ease;
+  }
+  .tag:hover { border-color: var(--accent-glow); color:#fff0fb; }
+  .arrow { transition: transform .25s ease; }
+  .group:hover .arrow { transform: translateX(4px); }
+  .scanlines::before {
+    content:""; position:absolute; inset:0; pointer-events:none;
+    background: repeating-linear-gradient(to bottom, rgba(255,255,255,.018) 0 1px, transparent 1px 3px);
+    mix-blend-mode: overlay;
+  }
+  a:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 2px; }
+</style>
+</head>
+<body class="bg-ink text-fg min-h-screen overflow-x-hidden">
+
+  <div aria-hidden="true" class="fixed inset-0 pointer-events-none -z-10">
+    <div class="absolute inset-0" style="background:
+      radial-gradient(60% 50% at 80% -10%, rgba(123,107,255,.10), transparent 60%),
+      radial-gradient(50% 40% at -10% 30%, rgba(255,92,214,.07), transparent 60%),
+      #0f041f;"></div>
+    <div class="absolute inset-0 opacity-[.25]" style="
+      background-image:
+        linear-gradient(to right, rgba(255,255,255,.025) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255,255,255,.025) 1px, transparent 1px);
+      background-size: 64px 64px;"></div>
+  </div>
+
+  <!-- NAV -->
+  <header class="sticky top-0 z-40 backdrop-blur-md bg-ink/70">
+    <nav class="max-w-5xl mx-auto px-6 md:px-10 h-16 flex items-center justify-between">
+      <a href="/" class="group flex items-center gap-2.5">
+        <span class="inline-flex items-center justify-center w-7 h-7 border text-[11px]" style="border-color: var(--accent-soft); color: var(--accent);">
+          {/}
+        </span>
+        <span class="font-semibold tracking-tight" style="color: var(--accent);">jm<span class="text-fg/60">@</span>dev</span>
+        <span class="hidden md:inline text-mute text-xs ml-2">~/blog</span>
+      </a>
+      <ul class="flex items-center gap-7 text-[13px]">
+        <li><a class="nav-link text-dim hover:text-fg transition-colors" href="/#about">about</a></li>
+        <li><a class="nav-link text-dim hover:text-fg transition-colors" href="/#experience">work</a></li>
+        <li><a class="nav-link text-dim hover:text-fg transition-colors" href="/#projects">projects</a></li>
+        <li><a class="nav-link text-fg" href="/blog" aria-current="true">blog</a></li>
+        <li><a class="nav-link text-dim hover:text-fg transition-colors" href="/#contact">contact</a></li>
+      </ul>
+    </nav>
+    <div class="nav-border"></div>
+  </header>
+
+  <!-- HERO -->
+  <section class="relative scanlines">
+    <div class="max-w-5xl mx-auto px-6 md:px-10 pt-20 md:pt-28 pb-10">
+      <div class="reveal flex items-center gap-3 text-[12px] text-mute">
+        <span class="label">// blog</span>
+        <span class="text-line">·</span>
+        <span>field notes from a working engineer</span>
+      </div>
+      <h1 class="reveal mt-6 text-fg text-5xl md:text-7xl font-semibold tracking-tight leading-[0.95]">
+        cat&nbsp;<span style="color: var(--accent);">posts</span>/*
+      </h1>
+      <p class="reveal mt-6 max-w-2xl text-fg/75 text-[15px] md:text-[16px] leading-relaxed">
+        Short, opinionated write-ups on distributed systems, event-driven architecture, and the gritty
+        middle of shipping production infrastructure. Notes from the Ads &amp; Promotions trenches at DoorDash.
+      </p>
+      <div class="reveal mt-8 flex flex-wrap gap-2 text-[12px]">
+        <button data-filter="all"     class="tag px-3 py-1.5 text-fg" aria-pressed="true">all</button>
+        <button data-filter="systems" class="tag px-3 py-1.5 text-fg/80">systems</button>
+        <button data-filter="kafka"   class="tag px-3 py-1.5 text-fg/80">kafka</button>
+        <button data-filter="infra"   class="tag px-3 py-1.5 text-fg/80">infra</button>
+        <button data-filter="notes"   class="tag px-3 py-1.5 text-fg/80">notes</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- POSTS -->
+  <section class="relative pb-24 md:pb-32">
+    <div class="max-w-5xl mx-auto px-6 md:px-10">
+      <div class="reveal hr-lab text-[12px] mb-8">
+        <span class="label">// index</span><span class="text-mute">7 entries</span>
+      </div>
+
+      <ul class="grid md:grid-cols-2 gap-5" id="post-list">
+
+        <li class="md:col-span-2 reveal" data-tags="kafka systems">
+          <a href="/blog/posts/decoupling-into-kafka" class="post group block p-7 md:p-9">
+            <span class="corner tl"></span><span class="corner tr"></span>
+            <span class="corner bl"></span><span class="corner br"></span>
+            <div class="flex items-center justify-between text-[11px] text-mute">
+              <div class="flex items-center gap-3">
+                <span style="color: var(--accent);">★ pinned</span>
+                <span class="text-line">·</span>
+                <span>2026-04-08</span>
+                <span class="text-line">·</span>
+                <span>11 min read</span>
+              </div>
+              <span class="text-mute">post_001</span>
+            </div>
+            <h2 class="mt-4 text-fg text-2xl md:text-3xl tracking-tight font-medium">
+              Decoupling synchronous code paths into Kafka, without regrets
+            </h2>
+            <p class="mt-3 text-fg/75 text-[14.5px] leading-relaxed max-w-3xl">
+              Notes from a year of moving a synchronous service into a Publisher → Topic → Consumer pipeline:
+              picking partition keys, surviving rebalances, getting idempotency right, and what we actually
+              put in our DLQ.
+            </p>
+            <div class="mt-6 flex items-center justify-between">
+              <div class="flex flex-wrap gap-2 text-[12px]">
+                <span class="tag px-2.5 py-1">kafka</span>
+                <span class="tag px-2.5 py-1">systems</span>
+                <span class="tag px-2.5 py-1">essay</span>
+              </div>
+              <span class="inline-flex items-center gap-2 text-[13px] text-fg/85">
+                read <span class="arrow" style="color: var(--accent);">→</span>
+              </span>
+            </div>
+          </a>
+        </li>
+
+        <li class="reveal" data-tags="systems">
+          <a href="#" data-coming-soon="true" class="post group block p-6 h-full">
+            <span class="corner tl"></span><span class="corner tr"></span>
+            <span class="corner bl"></span><span class="corner br"></span>
+            <div class="flex items-center justify-between text-[11px] text-mute"><span>2026-03-14</span><span>7 min</span></div>
+            <h3 class="mt-3 text-xl tracking-tight">Token Bucket vs. Sliding Window, in production</h3>
+            <p class="mt-3 text-fg/70 text-[14px] leading-relaxed">
+              When each algorithm wins, when each one bites, and how I ended up shipping a hybrid framework
+              that runs LOCAL, HYBRID, and DISTRIBUTED on the same code path.
+            </p>
+            <div class="mt-5 flex flex-wrap gap-2 text-[12px]">
+              <span class="tag px-2.5 py-1">systems</span>
+              <span class="tag px-2.5 py-1">redis</span>
+            </div>
+          </a>
+        </li>
+
+        <li class="reveal" data-tags="systems infra">
+          <a href="#" data-coming-soon="true" class="post group block p-6 h-full">
+            <span class="corner tl"></span><span class="corner tr"></span>
+            <span class="corner bl"></span><span class="corner br"></span>
+            <div class="flex items-center justify-between text-[11px] text-mute"><span>2026-02-22</span><span>6 min</span></div>
+            <h3 class="mt-3 text-xl tracking-tight">Zero-downtime migrations with dual writes</h3>
+            <p class="mt-3 text-fg/70 text-[14px] leading-relaxed">
+              How we deprecated a six-service Elasticsearch cluster without dropping a request: dual writes,
+              schema choreography, and an automated diff job that didn't lie to us.
+            </p>
+            <div class="mt-5 flex flex-wrap gap-2 text-[12px]">
+              <span class="tag px-2.5 py-1">infra</span>
+              <span class="tag px-2.5 py-1">elasticsearch</span>
+            </div>
+          </a>
+        </li>
+
+        <li class="reveal" data-tags="systems">
+          <a href="#" data-coming-soon="true" class="post group block p-6 h-full">
+            <span class="corner tl"></span><span class="corner tr"></span>
+            <span class="corner bl"></span><span class="corner br"></span>
+            <div class="flex items-center justify-between text-[11px] text-mute"><span>2026-01-30</span><span>5 min</span></div>
+            <h3 class="mt-3 text-xl tracking-tight">Consistent hashing made the scheduler 4&times; faster</h3>
+            <p class="mt-3 text-fg/70 text-[14px] leading-relaxed">
+              How we shed a single-pod scheduling bottleneck with cell-aware routing, consistent hashing for
+              job distribution, and graceful failover across data centers.
+            </p>
+            <div class="mt-5 flex flex-wrap gap-2 text-[12px]">
+              <span class="tag px-2.5 py-1">systems</span>
+              <span class="tag px-2.5 py-1">scheduling</span>
+            </div>
+          </a>
+        </li>
+
+        <li class="reveal" data-tags="infra">
+          <a href="#" data-coming-soon="true" class="post group block p-6 h-full">
+            <span class="corner tl"></span><span class="corner tr"></span>
+            <span class="corner bl"></span><span class="corner br"></span>
+            <div class="flex items-center justify-between text-[11px] text-mute"><span>2025-12-11</span><span>8 min</span></div>
+            <h3 class="mt-3 text-xl tracking-tight">Canary analysis for the impatient</h3>
+            <p class="mt-3 text-fg/70 text-[14px] leading-relaxed">
+              A walkthrough of the Spinnaker canary setup we use across six promotion endpoints — statistical
+              anomaly detection, automated rollback, and the handful of guardrails that pay for themselves.
+            </p>
+            <div class="mt-5 flex flex-wrap gap-2 text-[12px]">
+              <span class="tag px-2.5 py-1">infra</span>
+              <span class="tag px-2.5 py-1">spinnaker</span>
+            </div>
+          </a>
+        </li>
+
+        <li class="reveal" data-tags="notes">
+          <a href="#" data-coming-soon="true" class="post group block p-6 h-full">
+            <span class="corner tl"></span><span class="corner tr"></span>
+            <span class="corner bl"></span><span class="corner br"></span>
+            <div class="flex items-center justify-between text-[11px] text-mute"><span>2025-11-02</span><span>4 min</span></div>
+            <h3 class="mt-3 text-xl tracking-tight">DBSCAN, but for ops</h3>
+            <p class="mt-3 text-fg/70 text-[14px] leading-relaxed">
+              An intern-era project that keeps paying dividends: how density-based clustering shaped how I
+              now think about hotspots, alert noise, and grouping anything geospatial.
+            </p>
+            <div class="mt-5 flex flex-wrap gap-2 text-[12px]">
+              <span class="tag px-2.5 py-1">notes</span>
+              <span class="tag px-2.5 py-1">algorithms</span>
+            </div>
+          </a>
+        </li>
+
+        <li class="reveal" data-tags="systems">
+          <a href="#" data-coming-soon="true" class="post group block p-6 h-full">
+            <span class="corner tl"></span><span class="corner tr"></span>
+            <span class="corner bl"></span><span class="corner br"></span>
+            <div class="flex items-center justify-between text-[11px] text-mute"><span>2025-09-19</span><span>9 min</span></div>
+            <h3 class="mt-3 text-xl tracking-tight">A short, honest list of caching mistakes</h3>
+            <p class="mt-3 text-fg/70 text-[14px] leading-relaxed">
+              Stampedes, negative caches, hot keys, and the day a 99% local hit rate hid a very expensive
+              1% in the long tail. Lessons from running Redis under real load.
+            </p>
+            <div class="mt-5 flex flex-wrap gap-2 text-[12px]">
+              <span class="tag px-2.5 py-1">systems</span>
+              <span class="tag px-2.5 py-1">redis</span>
+            </div>
+          </a>
+        </li>
+
+      </ul>
+
+      <p class="reveal mt-10 text-mute text-[12px]">
+        <span style="color: var(--accent);">$</span> tail -n 5 archive.log &nbsp;<span class="text-line">→</span>&nbsp; older posts coming soon.
+      </p>
+    </div>
+  </section>
+
+  <footer class="relative pt-10 pb-14">
+    <div class="nav-border opacity-60 mb-10"></div>
+    <div class="max-w-5xl mx-auto px-6 md:px-10 text-center text-mute text-[12px]">
+      © 2026 John Mwai · New York, NY
+    </div>
+  </footer>
+
+  <div id="toast" role="status" aria-live="polite"><span class="dot"></span><span id="toast-msg">drafting…</span></div>
+
+  <script>
+    const io = new IntersectionObserver((entries) => {
+      for (const e of entries) {
+        if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); }
+      }
+    }, { threshold: 0.12 });
+    document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+
+    const filters = document.querySelectorAll('[data-filter]');
+    const items = document.querySelectorAll('#post-list > li');
+    filters.forEach(btn => btn.addEventListener('click', () => {
+      const f = btn.dataset.filter;
+      filters.forEach(b => b.setAttribute('aria-pressed', b === btn ? 'true' : 'false'));
+      items.forEach(li => {
+        const tags = (li.dataset.tags || '').split(/\s+/);
+        li.style.display = (f === 'all' || tags.includes(f)) ? '' : 'none';
+      });
+    }));
+
+    const toast = document.getElementById('toast');
+    const toastMsg = document.getElementById('toast-msg');
+    let toastTimer = null;
+    function showToast(msg) {
+      toastMsg.textContent = msg;
+      toast.classList.add('show');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => toast.classList.remove('show'), 2400);
+    }
+    document.querySelectorAll('a[data-coming-soon="true"]').forEach(a => {
+      a.addEventListener('click', e => {
+        e.preventDefault();
+        const title = a.querySelector('h2,h3')?.textContent?.trim() || 'this post';
+        showToast(`drafting "${title.length > 38 ? title.slice(0,38)+'…' : title}" — back soon`);
+      });
+    });
+  </script>
+</body>
+</html>
+{{ end }}

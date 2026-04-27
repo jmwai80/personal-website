@@ -5,11 +5,14 @@ import (
 	"html/template"
 	"net/http"
 	"os"
+	"regexp"
 	"strings"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/jmwai80/personal-website/models"
 )
+
+var nonAlpha = regexp.MustCompile(`[^a-z0-9]+`)
 
 var sharedHead = `
 <meta charset="utf-8"/>
@@ -59,18 +62,18 @@ func AdminIndex(w http.ResponseWriter, r *http.Request) {
 			draft = `<span class="text-[10px] border border-yellow-700 text-yellow-500 px-1.5 py-0.5">draft</span>`
 		}
 		rows.WriteString(fmt.Sprintf(`
-<tr class="border-b border-[#1e0f35] hover:bg-[#140828]">
-  <td class="px-4 py-3 text-sm">%s %s</td>
-  <td class="px-4 py-3 text-xs text-[#6b5a7e]">%s</td>
-  <td class="px-4 py-3 text-xs text-[#6b5a7e]">%s</td>
-  <td class="px-4 py-3 flex gap-3">
-    <a href="/admin/edit/%s" class="text-xs text-[#ff5cd6] hover:underline">edit</a>
-    <form method="POST" action="/admin/delete/%s" onsubmit="return confirm('Delete %s?')">
-      <input type="hidden" name="csrf_token" value="%s"/>
-      <button type="submit" class="text-xs text-red-400 hover:underline">delete</button>
-    </form>
-  </td>
-</tr>`, template.HTMLEscapeString(p.Title), draft,
+	<tr class="border-b border-[#1e0f35] hover:bg-[#140828]">
+	  <td class="px-4 py-3 text-sm">%s %s</td>
+	  <td class="px-4 py-3 text-xs text-[#6b5a7e]">%s</td>
+	  <td class="px-4 py-3 text-xs text-[#6b5a7e]">%s</td>
+	  <td class="px-4 py-3 flex gap-3">
+	    <a href="/admin/edit/%s" class="text-xs text-[#ff5cd6] hover:underline">edit</a>
+	    <form method="POST" action="/admin/delete/%s" onsubmit="return confirm('Delete %s?')">
+	      <input type="hidden" name="csrf_token" value="%s"/>
+	      <button type="submit" class="text-xs text-red-400 hover:underline">delete</button>
+	    </form>
+	  </td>
+	</tr>`, template.HTMLEscapeString(p.Title), draft,
 			template.HTMLEscapeString(p.Slug),
 			p.Date.Format("2006-01-02"),
 			template.HTMLEscapeString(p.Slug),
@@ -80,31 +83,31 @@ func AdminIndex(w http.ResponseWriter, r *http.Request) {
 	}
 
 	fmt.Fprintf(w, `<!doctype html><html><head><title>admin</title>%s</head>
-<body class="min-h-screen">
-%s
-<main class="max-w-4xl mx-auto px-6 py-10">
-  <div class="flex items-center justify-between mb-8">
-    <div>
-      <p class="text-[#ff5cd6] text-xs mb-1">$ ls content/posts/</p>
-      <h1 class="text-2xl font-semibold">posts</h1>
-    </div>
-    <a href="/admin/new" class="btn btn-primary">+ new post</a>
-  </div>
-  <div class="border border-[#1e0f35]">
-    <table class="w-full text-left">
-      <thead class="border-b border-[#1e0f35] bg-[#140828]">
-        <tr>
-          <th class="px-4 py-3 text-xs text-[#6b5a7e] font-medium">title</th>
-          <th class="px-4 py-3 text-xs text-[#6b5a7e] font-medium">slug</th>
-          <th class="px-4 py-3 text-xs text-[#6b5a7e] font-medium">date</th>
-          <th class="px-4 py-3 text-xs text-[#6b5a7e] font-medium">actions</th>
-        </tr>
-      </thead>
-      <tbody>%s</tbody>
-    </table>
-  </div>
-</main>
-</body></html>`, sharedHead, fmt.Sprintf(adminNav, csrf), rows.String())
+	<body class="min-h-screen">
+	%s
+	<main class="max-w-4xl mx-auto px-6 py-10">
+	  <div class="flex items-center justify-between mb-8">
+	    <div>
+	      <p class="text-[#ff5cd6] text-xs mb-1">$ ls content/posts/</p>
+	      <h1 class="text-2xl font-semibold">posts</h1>
+	    </div>
+	    <a href="/admin/new" class="btn btn-primary">+ new post</a>
+	  </div>
+	  <div class="border border-[#1e0f35]">
+	    <table class="w-full text-left">
+	      <thead class="border-b border-[#1e0f35] bg-[#140828]">
+	        <tr>
+	          <th class="px-4 py-3 text-xs text-[#6b5a7e] font-medium">title</th>
+	          <th class="px-4 py-3 text-xs text-[#6b5a7e] font-medium">slug</th>
+	          <th class="px-4 py-3 text-xs text-[#6b5a7e] font-medium">date</th>
+	          <th class="px-4 py-3 text-xs text-[#6b5a7e] font-medium">actions</th>
+	        </tr>
+	      </thead>
+	      <tbody>%s</tbody>
+	    </table>
+	  </div>
+	</main>
+	</body></html>`, sharedHead, fmt.Sprintf(adminNav, csrf), rows.String())
 }
 
 var postFormHTML = `<!doctype html><html><head><title>%s — admin</title>%s
@@ -123,12 +126,12 @@ var postFormHTML = `<!doctype html><html><head><title>%s — admin</title>%s
     <div class="grid grid-cols-2 gap-6 mb-4">
       <div>
         <label class="block text-xs text-[#6b5a7e] mb-1">slug</label>
-        <input type="text" name="slug" value="%s" %s placeholder="my-post-slug" pattern="[a-zA-Z0-9][a-zA-Z0-9_-]*" required/>
+        <input type="text" name="slug" id="slug" value="%s" %s placeholder="auto-generated" pattern="[a-zA-Z0-9][a-zA-Z0-9_-]*"/>
         <p class="text-xs text-[#6b5a7e] mt-1">url: /blog/posts/{slug}</p>
       </div>
       <div>
         <label class="block text-xs text-[#6b5a7e] mb-1">title</label>
-        <input type="text" name="title" value="%s" required/>
+        <input type="text" name="title" id="title" value="%s" required/>
       </div>
     </div>
     <div class="mb-4">
@@ -184,8 +187,32 @@ var postFormHTML = `<!doctype html><html><head><title>%s — admin</title>%s
     document.getElementById('preview').innerHTML = marked.parse(md || '');
   }
   updatePreview(document.getElementById('content').value);
+
+  // Auto-generate slug from title, stop when user manually edits slug
+  (function() {
+    var title = document.getElementById('title');
+    var slug = document.getElementById('slug');
+    var dirty = slug.value !== '';
+    title.addEventListener('input', function() {
+      if (!dirty) {
+        slug.value = title.value.toLowerCase()
+          .replace(/[^a-z0-9]+/g, '-')
+          .replace(/^-+|-+$/g, '');
+      }
+    });
+    slug.addEventListener('input', function() {
+      dirty = true;
+    });
+  })();
 </script>
 </body></html>`
+
+func slugify(title string) string {
+	s := strings.ToLower(title)
+	s = nonAlpha.ReplaceAllString(s, "-")
+	s = strings.Trim(s, "-")
+	return s
+}
 
 func NewPostForm(w http.ResponseWriter, r *http.Request) {
 	csrf := randomHex(16)
@@ -202,17 +229,20 @@ func NewPostForm(w http.ResponseWriter, r *http.Request) {
 		"", "new post",
 		errMsg,
 		"/admin/new", csrf,
-		"", "",             // slug (editable), title
-		"",                 // description
-		"",                 // tags
-		"",                 // draft unchecked
-		"",                 // content
+		"", "", // slug (editable), title
+		"", // description
+		"", // tags
+		"", // draft unchecked
+		"", // content
 	)
 }
 
 func CreatePost(w http.ResponseWriter, r *http.Request) {
-	slug := r.FormValue("slug")
 	title := r.FormValue("title")
+	slug := strings.TrimSpace(r.FormValue("slug"))
+	if slug == "" {
+		slug = slugify(title)
+	}
 	description := r.FormValue("description")
 	tags := parseTags(r.FormValue("tags"))
 	draft := r.FormValue("draft") == "on"

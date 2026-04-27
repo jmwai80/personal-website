@@ -266,6 +266,15 @@
         showToast(`drafting "${title.length > 38 ? title.slice(0,38)+'…' : title}" — back soon`);
       });
     });
+
+    if (document.cookie.includes('admin_session=')) {
+      var nav = document.querySelector('header ul');
+      if (nav) {
+        var li = document.createElement('li');
+        li.innerHTML = '<a href="/admin" style="color:var(--accent)" class="font-medium text-[13px]">admin</a>';
+        nav.appendChild(li);
+      }
+    }
   </script>
 </body>
 </html>

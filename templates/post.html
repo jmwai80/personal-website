@@ -86,6 +86,12 @@
       {{ .Title }}
     </h1>
 
+    <div data-admin-edit style="display:none" class="mt-3">
+      <a href="/admin/edit/{{ .Slug }}"
+        class="text-[11px] border border-[#1e0f35] px-3 py-1 hover:border-[var(--accent)] hover:text-[var(--accent)] transition-colors"
+        style="color:var(--accent);">edit post →</a>
+    </div>
+
     {{ if .Description }}
     <p class="mt-4 text-fg/70 text-[15px] leading-relaxed">{{ .Description }}</p>
     {{ end }}
@@ -116,6 +122,19 @@
       © 2026 John Mwai · New York, NY
     </div>
   </footer>
+  <script>
+    if (document.cookie.includes('admin_session=')) {
+      var nav = document.querySelector('header ul');
+      if (nav) {
+        var li = document.createElement('li');
+        li.innerHTML = '<a href="/admin" style="color:var(--accent)" class="font-medium text-[13px]">admin</a>';
+        nav.appendChild(li);
+      }
+      document.querySelectorAll('[data-admin-edit]').forEach(function(el) {
+        el.style.display = '';
+      });
+    }
+  </script>
 </body>
 </html>
 {{ end }}

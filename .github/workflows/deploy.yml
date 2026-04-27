@@ -60,11 +60,20 @@ jobs:
         run: |
           echo "${{ secrets.VM_SSH_KEY }}" > /tmp/deploy_key
           chmod 600 /tmp/deploy_key
-          # Use heredoc in the remote shell to avoid $$ expansion
+          # Use python to avoid shell $$ expansion
+          python3 -c "
+import os
+pw = os.environ.get('ADMIN_PASSWORD', '')
+sec = os.environ.get('SESSION_SECRET', '')
+with open('/tmp/.env', 'w') as f:
+    f.write(f'ADMIN_PASSWORD={pw}\nSESSION_SECRET={sec}\n')
+" && \
+          scp -i /tmp/deploy_key -o StrictHostKeyChecking=no \
+            /tmp/.env ${{ secrets.VM_USER }}@${{ secrets.VM_HOST }}:/app/.env && \
           ssh -i /tmp/deploy_key -o StrictHostKeyChecking=no \
-              ${{ secrets.VM_USER }}@${{ secrets.VM_HOST }} \
-              'cat > /app/.env << '\''EOF'\''
-ADMIN_PASSWORD=${{ secrets.ADMIN_PASSWORD }}
-SESSION_SECRET=${{ secrets.SESSION_SECRET }}
-EOF'
-          rm -f /tmp/deploy_key
+            ${{ secrets.VM_USER }}@${{ secrets.VM_HOST }} \
+            "cd /app && docker compose up -d"
+          rm -f /tmp/deploy_key /tmp/.env
+        env:
+          ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
+          SESSION_SECRET: ${{ secrets.SESSION_SECRET }}

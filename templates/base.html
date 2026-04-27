@@ -304,12 +304,13 @@
     });
 
     // Show admin nav link and edit buttons when logged in
-    if (document.cookie.includes('admin_session=')) {
+    if (document.cookie.includes('admin_logged_in=')) {
       var nav = document.querySelector('header ul');
       if (nav) {
         var li = document.createElement('li');
         li.innerHTML = '<a href="/admin" style="color:var(--accent)" class="font-medium text-[13px]">admin</a>';
-        nav.insertBefore(li, nav.querySelector('.hidden'));
+        var badge = nav.querySelector('.hidden');
+        if (badge) { nav.insertBefore(li, badge); } else { nav.appendChild(li); }
       }
       document.querySelectorAll('[data-admin-edit]').forEach(function(el) {
         el.style.display = '';

@@ -57,16 +57,23 @@
 
   <!-- NAV -->
   <header class="sticky top-0 z-40 backdrop-blur-md bg-ink/70">
-    <nav class="max-w-3xl mx-auto px-6 md:px-10 h-16 flex items-center justify-between">
+    <nav class="max-w-6xl mx-auto px-6 md:px-10 h-16 flex items-center justify-between">
       <a href="/" class="group flex items-center gap-2.5">
-        <span class="inline-flex items-center justify-center w-7 h-7 border text-[11px]" style="border-color:var(--accent-soft); color:var(--accent);">{/}</span>
-        <span class="font-semibold tracking-tight" style="color:var(--accent);">jm<span class="text-fg/60">@</span>dev</span>
+        <span class="inline-flex items-center justify-center w-7 h-7 border border-cyan/40 text-cyan text-[11px] tracking-tight">
+          {/}
+        </span>
+        <span class="text-cyan font-semibold tracking-tight">jm<span class="text-fg/60">@</span>dev</span>
+        <span class="hidden md:inline text-mute text-xs ml-2">~/blog</span>
       </a>
       <ul class="flex items-center gap-7 text-[13px]">
         <li><a class="nav-link text-dim hover:text-fg transition-colors" href="/#about">about</a></li>
+        <li><a class="nav-link text-dim hover:text-fg transition-colors" href="/#experience">work</a></li>
         <li><a class="nav-link text-dim hover:text-fg transition-colors" href="/#projects">projects</a></li>
         <li><a class="nav-link text-fg" href="/blog">blog</a></li>
         <li><a class="nav-link text-dim hover:text-fg transition-colors" href="/#contact">contact</a></li>
+        <li class="hidden sm:flex items-center gap-2 pl-5 ml-2 border-l border-line text-mute text-[12px]">
+          <span class="dot"></span><span>available</span>
+        </li>
       </ul>
     </nav>
     <div class="nav-border"></div>
@@ -86,10 +93,14 @@
       {{ .Title }}
     </h1>
 
-    <div data-admin-edit style="display:none" class="mt-3">
+    <div data-admin-edit style="display:none" class="mt-5 flex items-center gap-3">
+      <span class="text-mute text-[11px]">$</span>
       <a href="/admin/edit/{{ .Slug }}"
-        class="text-[11px] border border-[#1e0f35] px-3 py-1 hover:border-[var(--accent)] hover:text-[var(--accent)] transition-colors"
-        style="color:var(--accent);">edit post →</a>
+        class="btn btn-ghost text-[12px] px-4 py-1.5"
+        style="color:var(--accent); border-color:var(--accent-soft);">✎ edit this post</a>
+      <a href="/admin"
+        class="btn btn-ghost text-[12px] px-4 py-1.5"
+        style="color:#f87171; border-color:rgba(248,113,113,.25);">☰ manage posts</a>
     </div>
 
     {{ if .Description }}
@@ -123,12 +134,13 @@
     </div>
   </footer>
   <script>
-    if (document.cookie.includes('admin_session=')) {
+    if (document.cookie.includes('admin_logged_in=')) {
       var nav = document.querySelector('header ul');
       if (nav) {
         var li = document.createElement('li');
         li.innerHTML = '<a href="/admin" style="color:var(--accent)" class="font-medium text-[13px]">admin</a>';
-        nav.appendChild(li);
+        var badge = nav.querySelector('.hidden');
+        if (badge) { nav.insertBefore(li, badge); } else { nav.appendChild(li); }
       }
       document.querySelectorAll('[data-admin-edit]').forEach(function(el) {
         el.style.display = '';

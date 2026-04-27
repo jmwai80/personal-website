@@ -51,9 +51,17 @@ func setSessionCookie(w http.ResponseWriter) {
 	http.SetCookie(w, &http.Cookie{
 		Name:     "admin_session",
 		Value:    makeSessionToken(),
-		Path:     "/admin",
+		Path:     "/",
 		HttpOnly: true,
 		SameSite: http.SameSiteLaxMode,
+		MaxAge:   int(24 * time.Hour.Seconds()),
+	})
+	// Non-HttpOnly flag so JS can detect logged-in state for UI
+	http.SetCookie(w, &http.Cookie{
+		Name:     "admin_logged_in",
+		Value:    "1",
+		Path:     "/",
+		HttpOnly: false,
 		MaxAge:   int(24 * time.Hour.Seconds()),
 	})
 }
@@ -62,8 +70,15 @@ func clearSessionCookie(w http.ResponseWriter) {
 	http.SetCookie(w, &http.Cookie{
 		Name:     "admin_session",
 		Value:    "",
-		Path:     "/admin",
+		Path:     "/",
 		HttpOnly: true,
+		MaxAge:   -1,
+	})
+	http.SetCookie(w, &http.Cookie{
+		Name:     "admin_logged_in",
+		Value:    "",
+		Path:     "/",
+		HttpOnly: false,
 		MaxAge:   -1,
 	})
 }
@@ -112,6 +127,10 @@ const loginHTML = `<!doctype html>
 </html>`
 
 func LoginForm(w http.ResponseWriter, r *http.Request) {
+	if IsAuthenticated(r) {
+		http.Redirect(w, r, "/admin", http.StatusSeeOther)
+		return
+	}
 	csrf := randomHex(16)
 	http.SetCookie(w, &http.Cookie{
 		Name:     "csrf_token",

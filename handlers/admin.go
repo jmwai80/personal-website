@@ -24,13 +24,13 @@ var sharedHead = `
   :root{--accent:#ff5cd6;}
   input,textarea,select{background:#0a0318;border:1px solid #2a1040;color:#e8d6f0;padding:.5rem .75rem;width:100%;font-family:inherit;font-size:.875rem;}
   input:focus,textarea:focus{outline:none;border-color:#ff5cd6;}
-  .btn{display:inline-flex;align-items:center;gap:.5rem;padding:.5rem 1.25rem;font-size:.875rem;font-weight:600;cursor:pointer;transition:opacity .2s;}
-  .btn-primary{background:#ff5cd6;color:#0f041f;border:none;}
+  .btn{display:inline-flex;align-items:center;gap:.5rem;padding:.5rem 1.25rem;font-size:.875rem;font-weight:600;cursor:pointer;transition:opacity .2s;border:none;}
+  .btn-primary{background:#ff5cd6;color:#0f041f;}
   .btn-primary:hover{opacity:.85;}
   .btn-ghost{background:transparent;color:#e8d6f0;border:1px solid #2a1040;}
   .btn-ghost:hover{border-color:#ff5cd6;color:#ff5cd6;}
-  .btn-danger{background:transparent;color:#f87171;border:1px solid #7f1d1d;}
-  .btn-danger:hover{background:#7f1d1d22;}
+  .btn-danger{background:transparent;color:#f87171;border:1px solid rgba(248,113,113,.25);}
+  .btn-danger:hover{background:rgba(248,113,113,.08);border-color:#f87171;}
   ::selection{background:rgba(255,92,214,.25);}
 </style>`
 
@@ -59,19 +59,23 @@ func AdminIndex(w http.ResponseWriter, r *http.Request) {
 	for _, p := range posts {
 		draft := ""
 		if p.Draft {
-			draft = `<span class="text-[10px] border border-yellow-700 text-yellow-500 px-1.5 py-0.5">draft</span>`
+			draft = `<span class="text-[10px] border border-yellow-700 text-yellow-500 px-1.5 py-0.5 ml-2 align-middle">draft</span>`
 		}
 		rows.WriteString(fmt.Sprintf(`
-	<tr class="border-b border-[#1e0f35] hover:bg-[#140828]">
-	  <td class="px-4 py-3 text-sm">%s %s</td>
-	  <td class="px-4 py-3 text-xs text-[#6b5a7e]">%s</td>
-	  <td class="px-4 py-3 text-xs text-[#6b5a7e]">%s</td>
-	  <td class="px-4 py-3 flex gap-3">
-	    <a href="/admin/edit/%s" class="text-xs text-[#ff5cd6] hover:underline">edit</a>
-	    <form method="POST" action="/admin/delete/%s" onsubmit="return confirm('Delete %s?')">
-	      <input type="hidden" name="csrf_token" value="%s"/>
-	      <button type="submit" class="text-xs text-red-400 hover:underline">delete</button>
-	    </form>
+	<tr class="border-b border-[#1e0f35] hover:bg-[#140828] transition-colors">
+	  <td class="px-5 py-4">
+	    <div class="text-sm text-fg font-medium">%s %s</div>
+	    <div class="text-[11px] text-mute mt-1">%s</div>
+	  </td>
+	  <td class="px-5 py-4 text-xs text-mute">%s</td>
+	  <td class="px-5 py-4">
+	    <div class="flex items-center gap-3">
+	      <a href="/admin/edit/%s" class="btn-primary text-[11px] px-4 py-1.5 rounded" style="background:#ff5cd6;color:#0f041f;display:inline-flex;align-items:center;gap:.35rem;text-decoration:none;">✎ edit</a>
+	      <form method="POST" action="/admin/delete/%s" onsubmit="return confirm('Delete «%s»?')" style="display:inline">
+	        <input type="hidden" name="csrf_token" value="%s"/>
+	        <button type="submit" class="btn-danger text-[11px] px-4 py-1.5 rounded" style="background:transparent;color:#f87171;border:1px solid rgba(248,113,113,.25);cursor:pointer;display:inline-flex;align-items:center;gap:.35rem;">✕ delete</button>
+	      </form>
+	    </div>
 	  </td>
 	</tr>`, template.HTMLEscapeString(p.Title), draft,
 			template.HTMLEscapeString(p.Slug),
@@ -82,32 +86,34 @@ func AdminIndex(w http.ResponseWriter, r *http.Request) {
 			csrf))
 	}
 
-	fmt.Fprintf(w, `<!doctype html><html><head><title>admin</title>%s</head>
+	fmt.Fprintf(w, `<!doctype html><html><head><title>posts · admin</title>%s</head>
 	<body class="min-h-screen">
 	%s
-	<main class="max-w-4xl mx-auto px-6 py-10">
+	<main class="max-w-5xl mx-auto px-6 py-10">
 	  <div class="flex items-center justify-between mb-8">
 	    <div>
-	      <p class="text-[#ff5cd6] text-xs mb-1">$ ls content/posts/</p>
-	      <h1 class="text-2xl font-semibold">posts</h1>
+	      <p class="text-[#ff5cd6] text-xs mb-1 tracking-wider">$ ls content/posts/</p>
+	      <h1 class="text-2xl font-semibold tracking-tight">posts <span class="text-mute text-base font-normal">(%d total)</span></h1>
 	    </div>
-	    <a href="/admin/new" class="btn btn-primary">+ new post</a>
+	    <a href="/admin/new" class="btn-primary text-sm px-5 py-2.5 rounded flex items-center gap-2" style="background:#ff5cd6;color:#0f041f;text-decoration:none;">+ new post</a>
 	  </div>
-	  <div class="border border-[#1e0f35]">
+	  <div class="border border-[#1e0f35] rounded overflow-hidden">
 	    <table class="w-full text-left">
-	      <thead class="border-b border-[#1e0f35] bg-[#140828]">
-	        <tr>
-	          <th class="px-4 py-3 text-xs text-[#6b5a7e] font-medium">title</th>
-	          <th class="px-4 py-3 text-xs text-[#6b5a7e] font-medium">slug</th>
-	          <th class="px-4 py-3 text-xs text-[#6b5a7e] font-medium">date</th>
-	          <th class="px-4 py-3 text-xs text-[#6b5a7e] font-medium">actions</th>
+	      <thead>
+	        <tr class="bg-[#140828] border-b border-[#1e0f35]">
+	          <th class="px-5 py-3.5 text-xs text-mute font-medium tracking-wider uppercase">post</th>
+	          <th class="px-5 py-3.5 text-xs text-mute font-medium tracking-wider uppercase">date</th>
+	          <th class="px-5 py-3.5 text-xs text-mute font-medium tracking-wider uppercase">actions</th>
 	        </tr>
 	      </thead>
 	      <tbody>%s</tbody>
 	    </table>
 	  </div>
+	  <p class="mt-6 text-mute text-[11px]">
+	    <span style="color:var(--accent);">$</span> find content/posts/ -name "*.md" | wc -l &nbsp;<span style="color:#1e0f35;">→</span>&nbsp; %d files
+	  </p>
 	</main>
-	</body></html>`, sharedHead, fmt.Sprintf(adminNav, csrf), rows.String())
+	</body></html>`, sharedHead, fmt.Sprintf(adminNav, csrf), len(posts), rows.String(), len(posts))
 }
 
 var postFormHTML = `<!doctype html><html><head><title>%s — admin</title>%s
@@ -117,54 +123,54 @@ var postFormHTML = `<!doctype html><html><head><title>%s — admin</title>%s
 %s
 <main class="max-w-6xl mx-auto px-6 py-10">
   <div class="mb-6">
-    <p class="text-[#ff5cd6] text-xs mb-1">$ vim content/posts/%s.md</p>
-    <h1 class="text-2xl font-semibold">%s</h1>
+    <p class="text-[#ff5cd6] text-xs mb-1 tracking-wider">$ vim content/posts/%s.md</p>
+    <h1 class="text-2xl font-semibold tracking-tight">%s</h1>
   </div>
   %s
   <form method="POST" action="%s" id="postForm">
     <input type="hidden" name="csrf_token" value="%s"/>
     <div class="grid grid-cols-2 gap-6 mb-4">
       <div>
-        <label class="block text-xs text-[#6b5a7e] mb-1">slug</label>
+        <label class="block text-xs text-mute mb-1 tracking-wider uppercase">slug</label>
         <input type="text" name="slug" id="slug" value="%s" %s placeholder="auto-generated" pattern="[a-zA-Z0-9][a-zA-Z0-9_-]*"/>
-        <p class="text-xs text-[#6b5a7e] mt-1">url: /blog/posts/{slug}</p>
+        <p class="text-xs text-mute mt-1">url: /blog/posts/{slug}</p>
       </div>
       <div>
-        <label class="block text-xs text-[#6b5a7e] mb-1">title</label>
+        <label class="block text-xs text-mute mb-1 tracking-wider uppercase">title</label>
         <input type="text" name="title" id="title" value="%s" required/>
       </div>
     </div>
     <div class="mb-4">
-      <label class="block text-xs text-[#6b5a7e] mb-1">description</label>
+      <label class="block text-xs text-mute mb-1 tracking-wider uppercase">description</label>
       <input type="text" name="description" value="%s"/>
     </div>
     <div class="grid grid-cols-2 gap-6 mb-4">
       <div>
-        <label class="block text-xs text-[#6b5a7e] mb-1">tags (comma-separated)</label>
+        <label class="block text-xs text-mute mb-1 tracking-wider uppercase">tags</label>
         <input type="text" name="tags" value="%s" placeholder="kafka, systems, go"/>
       </div>
       <div class="flex items-center gap-3 pt-5">
         <input type="checkbox" name="draft" id="draft" %s class="w-4 h-4 accent-[#ff5cd6]"/>
-        <label for="draft" class="text-sm text-[#e8d6f0]">save as draft</label>
+        <label for="draft" class="text-sm text-fg">save as draft</label>
       </div>
     </div>
     <div class="grid grid-cols-2 gap-6">
       <div>
-        <label class="block text-xs text-[#6b5a7e] mb-1">content (markdown)</label>
+        <label class="block text-xs text-mute mb-1 tracking-wider uppercase">content (markdown)</label>
         <textarea name="content" id="content" rows="28"
           class="font-mono text-sm resize-none" style="min-height:500px"
           oninput="updatePreview(this.value)">%s</textarea>
       </div>
       <div>
-        <label class="block text-xs text-[#6b5a7e] mb-1">preview</label>
+        <label class="block text-xs text-mute mb-1 tracking-wider uppercase">preview</label>
         <div id="preview"
           class="border border-[#2a1040] bg-[#0a0318] p-4 overflow-auto text-sm leading-relaxed prose"
           style="min-height:500px; color:#e8d6f0;"></div>
       </div>
     </div>
     <div class="flex gap-3 mt-6">
-      <button type="submit" class="btn btn-primary">save post →</button>
-      <a href="/admin" class="btn btn-ghost">cancel</a>
+      <button type="submit" class="btn-primary text-sm px-6 py-2.5 rounded flex items-center gap-2" style="background:#ff5cd6;color:#0f041f;cursor:pointer;border:none;">save post →</button>
+      <a href="/admin" class="btn-ghost text-sm px-6 py-2.5 rounded" style="text-decoration:none;">cancel</a>
     </div>
   </form>
 </main>

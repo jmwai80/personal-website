@@ -107,12 +107,12 @@
 
   <!-- NAV -->
   <header class="sticky top-0 z-40 backdrop-blur-md bg-ink/70">
-    <nav class="max-w-5xl mx-auto px-6 md:px-10 h-16 flex items-center justify-between">
+    <nav class="max-w-6xl mx-auto px-6 md:px-10 h-16 flex items-center justify-between">
       <a href="/" class="group flex items-center gap-2.5">
-        <span class="inline-flex items-center justify-center w-7 h-7 border text-[11px]" style="border-color: var(--accent-soft); color: var(--accent);">
+        <span class="inline-flex items-center justify-center w-7 h-7 border border-cyan/40 text-cyan text-[11px] tracking-tight">
           {/}
         </span>
-        <span class="font-semibold tracking-tight" style="color: var(--accent);">jm<span class="text-fg/60">@</span>dev</span>
+        <span class="text-cyan font-semibold tracking-tight">jm<span class="text-fg/60">@</span>dev</span>
         <span class="hidden md:inline text-mute text-xs ml-2">~/blog</span>
       </a>
       <ul class="flex items-center gap-7 text-[13px]">
@@ -121,6 +121,9 @@
         <li><a class="nav-link text-dim hover:text-fg transition-colors" href="/#projects">projects</a></li>
         <li><a class="nav-link text-fg" href="/blog" aria-current="true">blog</a></li>
         <li><a class="nav-link text-dim hover:text-fg transition-colors" href="/#contact">contact</a></li>
+        <li class="hidden sm:flex items-center gap-2 pl-5 ml-2 border-l border-line text-mute text-[12px]">
+          <span class="dot"></span><span>available</span>
+        </li>
       </ul>
     </nav>
     <div class="nav-border"></div>
@@ -267,12 +270,13 @@
       });
     });
 
-    if (document.cookie.includes('admin_session=')) {
+    if (document.cookie.includes('admin_logged_in=')) {
       var nav = document.querySelector('header ul');
       if (nav) {
         var li = document.createElement('li');
         li.innerHTML = '<a href="/admin" style="color:var(--accent)" class="font-medium text-[13px]">admin</a>';
-        nav.appendChild(li);
+        var badge = nav.querySelector('.hidden');
+        if (badge) { nav.insertBefore(li, badge); } else { nav.appendChild(li); }
       }
     }
   </script>

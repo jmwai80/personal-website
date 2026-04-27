@@ -155,38 +155,31 @@
   <section class="relative pb-24 md:pb-32">
     <div class="max-w-5xl mx-auto px-6 md:px-10">
       <div class="reveal hr-lab text-[12px] mb-8">
-        <span class="label">// index</span><span class="text-mute">7 entries</span>
+        <span class="label">// index</span><span class="text-mute">{{ len .Posts }} {{ if eq (len .Posts) 1 }}entry{{ else }}entries{{ end }}</span>
       </div>
 
       <ul class="grid md:grid-cols-2 gap-5" id="post-list">
 
-        <li class="md:col-span-2 reveal" data-tags="kafka systems">
-          <a href="/blog/posts/decoupling-into-kafka" class="post group block p-7 md:p-9">
+        {{ range $i, $post := .Posts }}
+        {{ if eq $i 0 }}
+        <!-- featured: first/newest post, full width -->
+        <li class="md:col-span-2 reveal" data-tags="{{ range $post.Tags }}{{ . }} {{ end }}">
+          <a href="/blog/posts/{{ $post.Slug }}" class="post group block p-7 md:p-9">
             <span class="corner tl"></span><span class="corner tr"></span>
             <span class="corner bl"></span><span class="corner br"></span>
             <div class="flex items-center justify-between text-[11px] text-mute">
               <div class="flex items-center gap-3">
-                <span style="color: var(--accent);">★ pinned</span>
+                <span style="color: var(--accent);">★ latest</span>
                 <span class="text-line">·</span>
-                <span>2026-04-08</span>
-                <span class="text-line">·</span>
-                <span>11 min read</span>
+                <span>{{ $post.Date.Format "2006-01-02" }}</span>
               </div>
-              <span class="text-mute">post_001</span>
+              <span class="text-mute">post_{{ printf "%03d" (add $i 1) }}</span>
             </div>
-            <h2 class="mt-4 text-fg text-2xl md:text-3xl tracking-tight font-medium">
-              Decoupling synchronous code paths into Kafka, without regrets
-            </h2>
-            <p class="mt-3 text-fg/75 text-[14.5px] leading-relaxed max-w-3xl">
-              Notes from a year of moving a synchronous service into a Publisher → Topic → Consumer pipeline:
-              picking partition keys, surviving rebalances, getting idempotency right, and what we actually
-              put in our DLQ.
-            </p>
+            <h2 class="mt-4 text-fg text-2xl md:text-3xl tracking-tight font-medium">{{ $post.Title }}</h2>
+            <p class="mt-3 text-fg/75 text-[14.5px] leading-relaxed max-w-3xl">{{ $post.Description }}</p>
             <div class="mt-6 flex items-center justify-between">
               <div class="flex flex-wrap gap-2 text-[12px]">
-                <span class="tag px-2.5 py-1">kafka</span>
-                <span class="tag px-2.5 py-1">systems</span>
-                <span class="tag px-2.5 py-1">essay</span>
+                {{ range $post.Tags }}<span class="tag px-2.5 py-1">{{ . }}</span>{{ end }}
               </div>
               <span class="inline-flex items-center gap-2 text-[13px] text-fg/85">
                 read <span class="arrow" style="color: var(--accent);">→</span>
@@ -194,113 +187,38 @@
             </div>
           </a>
         </li>
-
-        <li class="reveal" data-tags="systems">
-          <a href="#" data-coming-soon="true" class="post group block p-6 h-full">
+        {{ else }}
+        <!-- regular card -->
+        <li class="reveal" data-tags="{{ range $post.Tags }}{{ . }} {{ end }}">
+          <a href="/blog/posts/{{ $post.Slug }}" class="post group block p-6 h-full">
             <span class="corner tl"></span><span class="corner tr"></span>
             <span class="corner bl"></span><span class="corner br"></span>
-            <div class="flex items-center justify-between text-[11px] text-mute"><span>2026-03-14</span><span>7 min</span></div>
-            <h3 class="mt-3 text-xl tracking-tight">Token Bucket vs. Sliding Window, in production</h3>
-            <p class="mt-3 text-fg/70 text-[14px] leading-relaxed">
-              When each algorithm wins, when each one bites, and how I ended up shipping a hybrid framework
-              that runs LOCAL, HYBRID, and DISTRIBUTED on the same code path.
-            </p>
+            <div class="flex items-center justify-between text-[11px] text-mute">
+              <span>{{ $post.Date.Format "2006-01-02" }}</span>
+              <span>post_{{ printf "%03d" (add $i 1) }}</span>
+            </div>
+            <h3 class="mt-3 text-xl tracking-tight">{{ $post.Title }}</h3>
+            <p class="mt-3 text-fg/70 text-[14px] leading-relaxed">{{ $post.Description }}</p>
             <div class="mt-5 flex flex-wrap gap-2 text-[12px]">
-              <span class="tag px-2.5 py-1">systems</span>
-              <span class="tag px-2.5 py-1">redis</span>
+              {{ range $post.Tags }}<span class="tag px-2.5 py-1">{{ . }}</span>{{ end }}
             </div>
           </a>
         </li>
+        {{ end }}
+        {{ end }}
 
-        <li class="reveal" data-tags="systems infra">
-          <a href="#" data-coming-soon="true" class="post group block p-6 h-full">
-            <span class="corner tl"></span><span class="corner tr"></span>
-            <span class="corner bl"></span><span class="corner br"></span>
-            <div class="flex items-center justify-between text-[11px] text-mute"><span>2026-02-22</span><span>6 min</span></div>
-            <h3 class="mt-3 text-xl tracking-tight">Zero-downtime migrations with dual writes</h3>
-            <p class="mt-3 text-fg/70 text-[14px] leading-relaxed">
-              How we deprecated a six-service Elasticsearch cluster without dropping a request: dual writes,
-              schema choreography, and an automated diff job that didn't lie to us.
-            </p>
-            <div class="mt-5 flex flex-wrap gap-2 text-[12px]">
-              <span class="tag px-2.5 py-1">infra</span>
-              <span class="tag px-2.5 py-1">elasticsearch</span>
-            </div>
-          </a>
+        {{ if not .Posts }}
+        <li class="md:col-span-2 reveal">
+          <p class="text-mute text-[13px]">
+            <span style="color: var(--accent);">$</span> ls posts/ &nbsp;→&nbsp; no posts yet.
+          </p>
         </li>
-
-        <li class="reveal" data-tags="systems">
-          <a href="#" data-coming-soon="true" class="post group block p-6 h-full">
-            <span class="corner tl"></span><span class="corner tr"></span>
-            <span class="corner bl"></span><span class="corner br"></span>
-            <div class="flex items-center justify-between text-[11px] text-mute"><span>2026-01-30</span><span>5 min</span></div>
-            <h3 class="mt-3 text-xl tracking-tight">Consistent hashing made the scheduler 4&times; faster</h3>
-            <p class="mt-3 text-fg/70 text-[14px] leading-relaxed">
-              How we shed a single-pod scheduling bottleneck with cell-aware routing, consistent hashing for
-              job distribution, and graceful failover across data centers.
-            </p>
-            <div class="mt-5 flex flex-wrap gap-2 text-[12px]">
-              <span class="tag px-2.5 py-1">systems</span>
-              <span class="tag px-2.5 py-1">scheduling</span>
-            </div>
-          </a>
-        </li>
-
-        <li class="reveal" data-tags="infra">
-          <a href="#" data-coming-soon="true" class="post group block p-6 h-full">
-            <span class="corner tl"></span><span class="corner tr"></span>
-            <span class="corner bl"></span><span class="corner br"></span>
-            <div class="flex items-center justify-between text-[11px] text-mute"><span>2025-12-11</span><span>8 min</span></div>
-            <h3 class="mt-3 text-xl tracking-tight">Canary analysis for the impatient</h3>
-            <p class="mt-3 text-fg/70 text-[14px] leading-relaxed">
-              A walkthrough of the Spinnaker canary setup we use across six promotion endpoints — statistical
-              anomaly detection, automated rollback, and the handful of guardrails that pay for themselves.
-            </p>
-            <div class="mt-5 flex flex-wrap gap-2 text-[12px]">
-              <span class="tag px-2.5 py-1">infra</span>
-              <span class="tag px-2.5 py-1">spinnaker</span>
-            </div>
-          </a>
-        </li>
-
-        <li class="reveal" data-tags="notes">
-          <a href="#" data-coming-soon="true" class="post group block p-6 h-full">
-            <span class="corner tl"></span><span class="corner tr"></span>
-            <span class="corner bl"></span><span class="corner br"></span>
-            <div class="flex items-center justify-between text-[11px] text-mute"><span>2025-11-02</span><span>4 min</span></div>
-            <h3 class="mt-3 text-xl tracking-tight">DBSCAN, but for ops</h3>
-            <p class="mt-3 text-fg/70 text-[14px] leading-relaxed">
-              An intern-era project that keeps paying dividends: how density-based clustering shaped how I
-              now think about hotspots, alert noise, and grouping anything geospatial.
-            </p>
-            <div class="mt-5 flex flex-wrap gap-2 text-[12px]">
-              <span class="tag px-2.5 py-1">notes</span>
-              <span class="tag px-2.5 py-1">algorithms</span>
-            </div>
-          </a>
-        </li>
-
-        <li class="reveal" data-tags="systems">
-          <a href="#" data-coming-soon="true" class="post group block p-6 h-full">
-            <span class="corner tl"></span><span class="corner tr"></span>
-            <span class="corner bl"></span><span class="corner br"></span>
-            <div class="flex items-center justify-between text-[11px] text-mute"><span>2025-09-19</span><span>9 min</span></div>
-            <h3 class="mt-3 text-xl tracking-tight">A short, honest list of caching mistakes</h3>
-            <p class="mt-3 text-fg/70 text-[14px] leading-relaxed">
-              Stampedes, negative caches, hot keys, and the day a 99% local hit rate hid a very expensive
-              1% in the long tail. Lessons from running Redis under real load.
-            </p>
-            <div class="mt-5 flex flex-wrap gap-2 text-[12px]">
-              <span class="tag px-2.5 py-1">systems</span>
-              <span class="tag px-2.5 py-1">redis</span>
-            </div>
-          </a>
-        </li>
+        {{ end }}
 
       </ul>
 
       <p class="reveal mt-10 text-mute text-[12px]">
-        <span style="color: var(--accent);">$</span> tail -n 5 archive.log &nbsp;<span class="text-line">→</span>&nbsp; older posts coming soon.
+        <span style="color: var(--accent);">$</span> wc -l posts/*.md &nbsp;<span class="text-line">→</span>&nbsp; {{ len .Posts }} published.
       </p>
     </div>
   </section>

@@ -62,7 +62,7 @@ jobs:
           chmod 600 /tmp/deploy_key
           ssh -i /tmp/deploy_key -o StrictHostKeyChecking=no \
               ${{ secrets.VM_USER }}@${{ secrets.VM_HOST }} \
-              "echo 'ADMIN_PASSWORD=${{ secrets.ADMIN_PASSWORD }}' > /app/.env
-               echo 'SESSION_SECRET=${{ secrets.SESSION_SECRET }}' >> /app/.env
-               cd /app && docker compose up -d"
+              "touch /app/.env
+               echo 'ADMIN_PASSWORD=${{ secrets.ADMIN_PASSWORD }}' > /app/.env
+               echo 'SESSION_SECRET=${{ secrets.SESSION_SECRET }}' >> /app/.env"
           rm -f /tmp/deploy_key

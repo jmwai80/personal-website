@@ -60,9 +60,11 @@ jobs:
         run: |
           echo "${{ secrets.VM_SSH_KEY }}" > /tmp/deploy_key
           chmod 600 /tmp/deploy_key
+          # Use heredoc in the remote shell to avoid $$ expansion
           ssh -i /tmp/deploy_key -o StrictHostKeyChecking=no \
               ${{ secrets.VM_USER }}@${{ secrets.VM_HOST }} \
-              "touch /app/.env
-               echo 'ADMIN_PASSWORD=${{ secrets.ADMIN_PASSWORD }}' > /app/.env
-               echo 'SESSION_SECRET=${{ secrets.SESSION_SECRET }}' >> /app/.env"
+              'cat > /app/.env << '\''EOF'\''
+ADMIN_PASSWORD=${{ secrets.ADMIN_PASSWORD }}
+SESSION_SECRET=${{ secrets.SESSION_SECRET }}
+EOF'
           rm -f /tmp/deploy_key

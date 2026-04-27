@@ -1,10 +1,13 @@
 package main
 
 import (
+	"bufio"
 	"embed"
 	"html/template"
 	"log"
 	"net/http"
+	"os"
+	"strings"
 
 	"github.com/go-chi/chi/v5"
 	chimw "github.com/go-chi/chi/v5/middleware"
@@ -31,6 +34,30 @@ var tmpl = template.Must(
 		},
 	}).ParseFS(templateFiles, "templates/*.html"),
 )
+
+func init() {
+	f, err := os.Open("/app/.env")
+	if err != nil {
+		return
+	}
+	defer f.Close()
+	scanner := bufio.NewScanner(f)
+	for scanner.Scan() {
+		line := strings.TrimSpace(scanner.Text())
+		if line == "" || strings.HasPrefix(line, "#") {
+			continue
+		}
+		parts := strings.SplitN(line, "=", 2)
+		if len(parts) != 2 {
+			continue
+		}
+		key := strings.TrimSpace(parts[0])
+		val := strings.TrimSpace(parts[1])
+		if key != "" && os.Getenv(key) == "" {
+			os.Setenv(key, val)
+		}
+	}
+}
 
 func main() {
 	r := chi.NewRouter()

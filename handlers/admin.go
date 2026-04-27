@@ -129,30 +129,31 @@ var postFormHTML = `<!doctype html><html><head><title>%s — admin</title>%s
   %s
   <form method="POST" action="%s" id="postForm">
     <input type="hidden" name="csrf_token" value="%s"/>
-    <div class="grid grid-cols-2 gap-6 mb-4">
-      <div>
-        <label class="block text-xs text-mute mb-1 tracking-wider uppercase">slug</label>
-        <input type="text" name="slug" id="slug" value="%s" %s placeholder="auto-generated" pattern="[a-zA-Z0-9][a-zA-Z0-9_-]*"/>
-        <p class="text-xs text-mute mt-1">url: /blog/posts/{slug}</p>
-      </div>
-      <div>
-        <label class="block text-xs text-mute mb-1 tracking-wider uppercase">title</label>
-        <input type="text" name="title" id="title" value="%s" required/>
-      </div>
+    <div class="mb-4">
+      <label class="block text-xs text-mute mb-1 tracking-wider uppercase">title</label>
+      <input type="text" name="title" id="title" value="%s" required class="text-lg font-medium"/>
     </div>
     <div class="mb-4">
       <label class="block text-xs text-mute mb-1 tracking-wider uppercase">description</label>
       <input type="text" name="description" value="%s"/>
     </div>
-    <div class="grid grid-cols-2 gap-6 mb-4">
-      <div>
-        <label class="block text-xs text-mute mb-1 tracking-wider uppercase">tags</label>
-        <input type="text" name="tags" value="%s" placeholder="kafka, systems, go"/>
+    <details class="mb-4 group">
+      <summary class="text-xs text-mute cursor-pointer hover:text-fg transition-colors select-none">⚙ slug &amp; metadata</summary>
+      <div class="mt-4 grid grid-cols-2 gap-6">
+        <div>
+          <label class="block text-xs text-mute mb-1 tracking-wider uppercase">slug</label>
+          <input type="text" name="slug" id="slug" value="%s" %s placeholder="auto-generated" pattern="[a-zA-Z0-9][a-zA-Z0-9_-]*"/>
+          <p class="text-xs text-mute mt-1">url: /blog/posts/{slug}</p>
+        </div>
+        <div>
+          <label class="block text-xs text-mute mb-1 tracking-wider uppercase">tags</label>
+          <input type="text" name="tags" value="%s" placeholder="kafka, systems, go"/>
+        </div>
       </div>
-      <div class="flex items-center gap-3 pt-5">
-        <input type="checkbox" name="draft" id="draft" %s class="w-4 h-4 accent-[#ff5cd6]"/>
-        <label for="draft" class="text-sm text-fg">save as draft</label>
-      </div>
+    </details>
+    <div class="flex items-center gap-3 mb-6 pt-2">
+      <input type="checkbox" name="draft" id="draft" %s class="w-4 h-4 accent-[#ff5cd6]"/>
+      <label for="draft" class="text-sm text-fg">save as draft</label>
     </div>
     <div class="grid grid-cols-2 gap-6">
       <div>
@@ -235,8 +236,9 @@ func NewPostForm(w http.ResponseWriter, r *http.Request) {
 		"", "new post",
 		errMsg,
 		"/admin/new", csrf,
-		"", "", // slug (editable), title
+		"", // title
 		"", // description
+		"", "", // slug, readonly
 		"", // tags
 		"", // draft unchecked
 		"", // content
@@ -291,9 +293,9 @@ func EditPostForm(w http.ResponseWriter, r *http.Request) {
 		slug, "edit post",
 		"",
 		"/admin/edit/"+slug, csrf,
-		slug, "readonly",
 		template.HTMLEscapeString(post.Title),
 		template.HTMLEscapeString(post.Description),
+		slug, "readonly",
 		template.HTMLEscapeString(strings.Join(post.Tags, ", ")),
 		draftChecked,
 		template.HTMLEscapeString(body),

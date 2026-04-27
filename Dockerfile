@@ -20,6 +20,10 @@ RUN apk --no-cache add ca-certificates
 
 WORKDIR /app
 COPY --from=builder /app/server .
+# Seed posts bundled in image — copied to volume on first run by entrypoint
+COPY --from=builder /app/content ./content-seed
+COPY entrypoint.sh .
+RUN chmod +x entrypoint.sh
 
 EXPOSE 8080
-CMD ["./server"]
+CMD ["./entrypoint.sh"]

@@ -270,7 +270,7 @@
       });
     });
 
-    if (document.cookie.includes('admin_logged_in=')) {
+    if (document.cookie.split(';').some(function(c) { return c.trim().startsWith('admin_logged_in='); })) {
       var nav = document.querySelector('header ul');
       if (nav) {
         var li = document.createElement('li');

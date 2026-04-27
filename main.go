@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 	chimw "github.com/go-chi/chi/v5/middleware"
@@ -75,7 +76,7 @@ func main() {
 
 	// Auth routes (public)
 	r.Get("/admin/login", handlers.LoginForm)
-	r.Post("/admin/login", handlers.LoginHandler)
+	r.With(middleware.RateLimit(10, 1*time.Minute)).Post("/admin/login", handlers.LoginHandler)
 	r.Post("/admin/logout", handlers.LogoutHandler)
 
 	// Protected admin routes

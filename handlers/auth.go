@@ -4,9 +4,11 @@ import (
 	"crypto/hmac"
 	"crypto/rand"
 	"crypto/sha256"
+	"crypto/subtle"
 	"encoding/base64"
 	"encoding/hex"
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"strconv"
@@ -17,7 +19,7 @@ import (
 func sessionSecret() []byte {
 	s := os.Getenv("SESSION_SECRET")
 	if s == "" {
-		s = "dev-secret-change-in-production"
+		log.Fatal("SESSION_SECRET is not set — refusing to start with an insecure default")
 	}
 	return []byte(s)
 }
@@ -157,7 +159,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 
 	password := r.FormValue("password")
 	expected := os.Getenv("ADMIN_PASSWORD")
-	if expected == "" || password != expected {
+	if expected == "" || subtle.ConstantTimeCompare([]byte(password), []byte(expected)) != 1 {
 		http.Redirect(w, r, "/admin/login?err=1", http.StatusSeeOther)
 		return
 	}

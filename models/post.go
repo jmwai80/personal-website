@@ -113,7 +113,15 @@ func SavePost(slug, title, description string, tags []string, draft bool, conten
 	}
 
 	out := "---\n" + string(front) + "---\n\n" + strings.TrimSpace(content) + "\n"
-	return os.WriteFile(fullPath, []byte(out), 0644)
+
+	tmpPath := fullPath + ".tmp"
+	if err := os.WriteFile(tmpPath, []byte(out), 0644); err != nil {
+		return fmt.Errorf("writing tmp file: %w", err)
+	}
+	if err := os.Rename(tmpPath, fullPath); err != nil {
+		return fmt.Errorf("renaming tmp file: %w", err)
+	}
+	return nil
 }
 
 func DeletePost(slug string) error {

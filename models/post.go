@@ -76,12 +76,64 @@ func LoadPost(slug string) (*Post, error) {
 	}, nil
 }
 
-func ListPosts() ([]*Post, error) {
+func SavePost(slug, title, description string, tags []string, draft bool, content string) error {
+	slug = strings.ToLower(slug)
+	if !slugPattern.MatchString(slug) {
+		return fmt.Errorf("invalid slug: %s", slug)
+	}
+	base, _ := filepath.Abs("content/posts")
+	fullPath := filepath.Clean(filepath.Join(base, slug+".md"))
+	rel, err := filepath.Rel(base, fullPath)
+	if err != nil || strings.HasPrefix(rel, "..") {
+		return fmt.Errorf("path escapes base directory")
+	}
+
+	type fm struct {
+		Title       string   `yaml:"title"`
+		Date        string   `yaml:"date"`
+		Tags        []string `yaml:"tags"`
+		Draft       bool     `yaml:"draft"`
+		Description string   `yaml:"description"`
+	}
+	// Preserve existing date if file exists
+	date := time.Now().Format("2006-01-02")
+	if existing, err := LoadPost(slug); err == nil {
+		date = existing.Date.Format("2006-01-02")
+	}
+
+	front, err := yaml.Marshal(fm{
+		Title:       title,
+		Date:        date,
+		Tags:        tags,
+		Draft:       draft,
+		Description: description,
+	})
+	if err != nil {
+		return fmt.Errorf("marshaling frontmatter: %w", err)
+	}
+
+	out := "---\n" + string(front) + "---\n\n" + strings.TrimSpace(content) + "\n"
+	return os.WriteFile(fullPath, []byte(out), 0644)
+}
+
+func DeletePost(slug string) error {
+	if !slugPattern.MatchString(slug) {
+		return fmt.Errorf("invalid slug: %s", slug)
+	}
+	base, _ := filepath.Abs("content/posts")
+	fullPath := filepath.Clean(filepath.Join(base, slug+".md"))
+	rel, err := filepath.Rel(base, fullPath)
+	if err != nil || strings.HasPrefix(rel, "..") {
+		return fmt.Errorf("path escapes base directory")
+	}
+	return os.Remove(fullPath)
+}
+
+func listPosts(includeDrafts bool) ([]*Post, error) {
 	entries, err := os.ReadDir("content/posts")
 	if err != nil {
 		return nil, fmt.Errorf("reading posts dir: %w", err)
 	}
-
 	var posts []*Post
 	for _, e := range entries {
 		if e.IsDir() || !strings.HasSuffix(e.Name(), ".md") {
@@ -93,13 +145,18 @@ func ListPosts() ([]*Post, error) {
 			log.Printf("skipping %s: %v", e.Name(), err)
 			continue
 		}
-		if !post.Draft {
+		if includeDrafts || !post.Draft {
 			posts = append(posts, post)
 		}
 	}
-
 	sort.Slice(posts, func(i, j int) bool {
 		return posts[i].Date.After(posts[j].Date)
 	})
 	return posts, nil
 }
+
+// ListPosts returns published posts only, sorted by date descending.
+func ListPosts() ([]*Post, error) { return listPosts(false) }
+
+// ListAllPosts returns all posts including drafts (for admin).
+func ListAllPosts() ([]*Post, error) { return listPosts(true) }

@@ -1,4 +1,4 @@
-module github.com/jmwaid80/personal-website
+module github.com/jmwai80/personal-website
 
 go 1.26.2
 

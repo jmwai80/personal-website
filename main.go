@@ -7,9 +7,11 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
+	chimw "github.com/go-chi/chi/v5/middleware"
 
-	"github.com/jmwaid80/personal-website/models"
+	"github.com/jmwai80/personal-website/handlers"
+	"github.com/jmwai80/personal-website/middleware"
+	"github.com/jmwai80/personal-website/models"
 )
 
 //go:embed templates
@@ -32,13 +34,32 @@ var tmpl = template.Must(
 
 func main() {
 	r := chi.NewRouter()
-	r.Use(middleware.Logger)
-	r.Use(middleware.Recoverer)
+	r.Use(chimw.Logger)
+	r.Use(chimw.Recoverer)
 
+	// Public routes
 	r.Get("/", homeHandler)
 	r.Get("/health", healthHandler)
 	r.Get("/blog", blogHandler)
 	r.Get("/blog/posts/{slug}", postHandler)
+
+	// Auth routes (public)
+	r.Get("/admin/login", handlers.LoginForm)
+	r.Post("/admin/login", handlers.LoginHandler)
+	r.Post("/admin/logout", handlers.LogoutHandler)
+
+	// Protected admin routes
+	r.Group(func(r chi.Router) {
+		r.Use(middleware.RequireAdmin)
+		r.Use(middleware.CSRFProtect)
+
+		r.Get("/admin", handlers.AdminIndex)
+		r.Get("/admin/new", handlers.NewPostForm)
+		r.Post("/admin/new", handlers.CreatePost)
+		r.Get("/admin/edit/{slug}", handlers.EditPostForm)
+		r.Post("/admin/edit/{slug}", handlers.UpdatePost)
+		r.Post("/admin/delete/{slug}", handlers.DeletePost)
+	})
 
 	log.Println("Listening on :8080")
 	log.Fatal(http.ListenAndServe(":8080", r))
@@ -57,7 +78,21 @@ func blogHandler(w http.ResponseWriter, r *http.Request) {
 		log.Printf("ListPosts error: %v", err)
 		posts = []*models.Post{}
 	}
-	data := struct{ Posts []*models.Post }{Posts: posts}
+	// Collect unique tags across all posts
+	seen := map[string]bool{}
+	var tags []string
+	for _, p := range posts {
+		for _, t := range p.Tags {
+			if !seen[t] {
+				seen[t] = true
+				tags = append(tags, t)
+			}
+		}
+	}
+	data := struct {
+		Posts []*models.Post
+		Tags  []string
+	}{Posts: posts, Tags: tags}
 	if err := tmpl.ExecuteTemplate(w, "blog", data); err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		log.Printf("blog template error: %v", err)

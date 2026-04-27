@@ -142,11 +142,10 @@
         middle of shipping production infrastructure. Notes from the Ads &amp; Promotions trenches at DoorDash.
       </p>
       <div class="reveal mt-8 flex flex-wrap gap-2 text-[12px]">
-        <button data-filter="all"     class="tag px-3 py-1.5 text-fg" aria-pressed="true">all</button>
-        <button data-filter="systems" class="tag px-3 py-1.5 text-fg/80">systems</button>
-        <button data-filter="kafka"   class="tag px-3 py-1.5 text-fg/80">kafka</button>
-        <button data-filter="infra"   class="tag px-3 py-1.5 text-fg/80">infra</button>
-        <button data-filter="notes"   class="tag px-3 py-1.5 text-fg/80">notes</button>
+        <button data-filter="all" class="tag px-3 py-1.5 text-fg" aria-pressed="true">all</button>
+        {{ range .Tags }}
+        <button data-filter="{{ . }}" class="tag px-3 py-1.5 text-fg/80">{{ . }}</button>
+        {{ end }}
       </div>
     </div>
   </section>
